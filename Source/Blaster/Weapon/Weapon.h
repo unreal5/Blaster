@@ -4,6 +4,8 @@
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
+class UWidgetComponent;
+
 UENUM(BlueprintType)
 enum class EWeaponState : uint8
 {
@@ -20,9 +22,11 @@ class BLASTER_API AWeapon : public AActor
 
 public:
 	AWeapon();
+
+
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
-
+	void ShowPickupWidget(bool bShowWidget);
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon Properties")
 	class USkeletalMeshComponent* WeaponMesh;
@@ -32,5 +36,15 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon Properties")
 	EWeaponState WeaponState = EWeaponState::EWS_Initial;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon Properties")
+	TObjectPtr<UWidgetComponent> PickupWidget;
+private:
+	UFUNCTION()
+	void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 public:
+	void SetWeaponState(EWeaponState State);
 };
