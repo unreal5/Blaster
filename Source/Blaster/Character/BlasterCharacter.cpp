@@ -49,10 +49,10 @@ void ABlasterCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 	// 在Combat组件的BeginPlay中，也可以设置
-	if (CombatComponent)
-	{
-		CombatComponent->Character = this;
-	}
+	//if (CombatComponent)
+	//{
+	//	CombatComponent->Character = this;
+	//}
 }
 
 void ABlasterCharacter::BeginPlay()
@@ -114,12 +114,12 @@ void ABlasterCharacter::CrouchButtonPressed()
 
 void ABlasterCharacter::AimButtonPressed()
 {
-	CombatComponent->bAiming = true;
+	CombatComponent->SetAiming(true);
 }
 
 void ABlasterCharacter::AimButtonReleased()
 {
-	CombatComponent->bAiming = false;
+	CombatComponent->SetAiming(false);
 }
 
 void ABlasterCharacter::Server_EquipButtonPressed_Implementation()
@@ -202,10 +202,10 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 bool ABlasterCharacter::IsWeaponEquipped() const
 {
-	return (CombatComponent && CombatComponent->EquippedWeapon != nullptr);
+	return (CombatComponent && CombatComponent->GetEquippedWeapon() != nullptr);
 }
 
 bool ABlasterCharacter::IsAiming() const
 {
-	return CombatComponent && CombatComponent->bAiming;
+	return CombatComponent && CombatComponent->IsAiming();
 }

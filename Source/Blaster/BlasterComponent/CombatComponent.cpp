@@ -17,8 +17,16 @@
 UCombatComponent::UCombatComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+
+	//IMPORTANT! 必须设置为true，否则组件将不调用InitializeComponent
+	bWantsInitializeComponent = true;
 }
 
+void UCombatComponent::InitializeComponent()
+{
+	Super::InitializeComponent();
+	Character = Cast<ABlasterCharacter>(GetOwner());
+}
 
 void UCombatComponent::BeginPlay()
 {
@@ -41,7 +49,7 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 	EquippedWeapon = WeaponToEquip;
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-	
+
 	auto SkeletalMesh = Character->GetMesh();
 	if (!SkeletalMesh) return;
 	auto RightHandSocket = SkeletalMesh->GetSocketByName("RightHandSocket");
@@ -50,7 +58,6 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 		RightHandSocket->AttachActor(EquippedWeapon.Get(), SkeletalMesh);
 	}
 	EquippedWeapon->SetOwner(Character.Get());
-	
 }
 
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -58,4 +65,29 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ThisClass, EquippedWeapon);
+	DOREPLIFETIME(ThisClass, bAiming);
+}
+
+void UCombatComponent::SetAiming(bool bNewAiming)
+{
+	if (bNewAiming == bAiming) return;
+	if (!Character.IsValid()) return;
+
+	// 技巧：客户端立即响应（不需要等待RPC延迟）
+	bAiming = bNewAiming;
+
+	//如果位于客户端，则需要别的客户端也同步显示。
+	// 进一步思考，可以略过if判断（位于服务端时，会两次设置bAiming为同一值）
+	//if (!Character->HasAuthority())
+	{
+		Server_SetAiming(bNewAiming);
+	}
+}
+
+
+void UCombatComponent::Server_SetAiming_Implementation(bool bNewAiming)
+{
+	check(Character.IsValid() && Character->HasAuthority());
+
+	bAiming = bNewAiming;
 }

@@ -8,15 +8,16 @@
 
 
 class AWeapon;
-
+class ABlasterCharacter;
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class BLASTER_API UCombatComponent : public UActorComponent
 {
 	GENERATED_BODY()
-	friend class ABlasterCharacter;
+	//friend class ABlasterCharacter;
 
 public:
 	UCombatComponent();
+	virtual void InitializeComponent() override;
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
@@ -24,11 +25,20 @@ public:
 	void EquipWeapon(AWeapon* WeaponToEquip);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	void SetAiming(bool bNewAiming);
 private:
 	TWeakObjectPtr<ABlasterCharacter> Character;
 
 	UPROPERTY(Replicated)
 	TWeakObjectPtr<AWeapon> EquippedWeapon;
 
+	UPROPERTY(Replicated)
 	bool bAiming = false;
+
+	UFUNCTION(Server, Reliable)
+	void Server_SetAiming(bool bNewAiming);
+
+public:
+	AWeapon* GetEquippedWeapon() const { return EquippedWeapon.Get(); }
+	bool IsAiming() const { return bAiming; }
 };
