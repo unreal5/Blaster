@@ -22,6 +22,7 @@ ABlasterCharacter::ABlasterCharacter()
 	CameraBoom->TargetArmLength = 600.0f;
 	CameraBoom->SocketOffset = FVector(0.f, 55.f, 65.f);
 	CameraBoom->bUsePawnControlRotation = true;
+	CameraBoom->bDoCollisionTest = false;
 
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
@@ -37,6 +38,11 @@ ABlasterCharacter::ABlasterCharacter()
 	//组件类处理复制只需要以下代码，然后组件自身再按照复制的要求（声明复制变量，注册复制变量……）处理
 	// 组件自身不需要在GetLifetimeReplicatedProps中注册，因为组件类的GetLifetimeReplicatedProps会被调用
 	CombatComponent->SetIsReplicated(true);
+
+	// 调整下蹲参数
+	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = 100.f;
+	GetCharacterMovement()->CrouchedHalfHeight = 60.f;
 }
 
 void ABlasterCharacter::PostInitializeComponents()
@@ -101,6 +107,21 @@ void ABlasterCharacter::EquipButtonPressed()
 	}
 }
 
+void ABlasterCharacter::CrouchButtonPressed()
+{
+	bIsCrouched ? UnCrouch() : Crouch();
+}
+
+void ABlasterCharacter::AimButtonPressed()
+{
+	CombatComponent->bAiming = true;
+}
+
+void ABlasterCharacter::AimButtonReleased()
+{
+	CombatComponent->bAiming = false;
+}
+
 void ABlasterCharacter::Server_EquipButtonPressed_Implementation()
 {
 	if (!OverlappingWeapon) return;
@@ -121,6 +142,7 @@ void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 		}
 	}
 }
+
 
 void ABlasterCharacter::Tick(float DeltaTime)
 {
@@ -166,4 +188,24 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	// 装备武器
 	EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this,
 	                                   &ABlasterCharacter::EquipButtonPressed);
+
+	// 下蹲
+	EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this,
+	                                   &ABlasterCharacter::CrouchButtonPressed);
+
+	// 瞄准
+	EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this,
+	                                   &ABlasterCharacter::AimButtonPressed);
+	EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this,
+	                                   &ABlasterCharacter::AimButtonReleased);
+}
+
+bool ABlasterCharacter::IsWeaponEquipped() const
+{
+	return (CombatComponent && CombatComponent->EquippedWeapon != nullptr);
+}
+
+bool ABlasterCharacter::IsAiming() const
+{
+	return CombatComponent && CombatComponent->bAiming;
 }

@@ -5,7 +5,11 @@
 
 #include "Character/BlasterCharacter.h"
 
+#include "Components/SphereComponent.h"
+
 #include "Engine/SkeletalMeshSocket.h"
+
+#include "Net/UnrealNetwork.h"
 
 #include "Weapon/Weapon.h"
 
@@ -46,5 +50,12 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 		RightHandSocket->AttachActor(EquippedWeapon.Get(), SkeletalMesh);
 	}
 	EquippedWeapon->SetOwner(Character.Get());
-	EquippedWeapon->ShowPickupWidget(false);
+	
+}
+
+void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ThisClass, EquippedWeapon);
 }

@@ -22,7 +22,13 @@ public:
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
 	void EquipWeapon(AWeapon* WeaponToEquip);
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 private:
 	TWeakObjectPtr<ABlasterCharacter> Character;
+
+	UPROPERTY(Replicated)
 	TWeakObjectPtr<AWeapon> EquippedWeapon;
+
+	bool bAiming = false;
 };

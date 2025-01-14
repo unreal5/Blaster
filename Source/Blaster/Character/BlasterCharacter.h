@@ -41,6 +41,10 @@ private:
 	UInputAction* LookAction;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* EquipAction;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* CrouchAction;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* AimAction;
 	// widget
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = UI, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* OverheadWidgetComponent;
@@ -56,9 +60,18 @@ private:
 	// 装备武器
 	void EquipButtonPressed();
 
+	// 下蹲
+	void CrouchButtonPressed();
+
+	// 瞄准
+	void AimButtonPressed();
+	void AimButtonReleased();
+	
 	UFUNCTION(Server, Reliable)
 	void Server_EquipButtonPressed();
 
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
+	bool IsWeaponEquipped() const;
+	bool IsAiming() const;
 };
