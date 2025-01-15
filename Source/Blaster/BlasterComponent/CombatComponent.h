@@ -29,8 +29,11 @@ public:
 private:
 	TWeakObjectPtr<ABlasterCharacter> Character;
 
-	UPROPERTY(Replicated)
-	TWeakObjectPtr<AWeapon> EquippedWeapon;
+	UFUNCTION()
+	void OnRep_EquippedWeapon(AWeapon* OldWeapon);
+	
+	UPROPERTY(ReplicatedUsing=OnRep_EquippedWeapon)
+	AWeapon* EquippedWeapon;
 
 	UPROPERTY(Replicated)
 	bool bAiming = false;
@@ -39,6 +42,9 @@ private:
 	void Server_SetAiming(bool bNewAiming);
 
 public:
-	AWeapon* GetEquippedWeapon() const { return EquippedWeapon.Get(); }
+	AWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
 	bool IsAiming() const { return bAiming; }
 };
+
+
+

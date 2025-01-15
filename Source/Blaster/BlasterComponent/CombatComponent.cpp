@@ -9,6 +9,8 @@
 
 #include "Engine/SkeletalMeshSocket.h"
 
+#include "GameFramework/CharacterMovementComponent.h"
+
 #include "Net/UnrealNetwork.h"
 
 #include "Weapon/Weapon.h"
@@ -55,9 +57,11 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	auto RightHandSocket = SkeletalMesh->GetSocketByName("RightHandSocket");
 	if (RightHandSocket)
 	{
-		RightHandSocket->AttachActor(EquippedWeapon.Get(), SkeletalMesh);
+		RightHandSocket->AttachActor(EquippedWeapon, SkeletalMesh);
 	}
 	EquippedWeapon->SetOwner(Character.Get());
+	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+	Character->bUseControllerRotationYaw = true;
 }
 
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -90,4 +94,13 @@ void UCombatComponent::Server_SetAiming_Implementation(bool bNewAiming)
 	check(Character.IsValid() && Character->HasAuthority());
 
 	bAiming = bNewAiming;
+}
+
+void UCombatComponent::OnRep_EquippedWeapon(AWeapon* OldWeapon)
+{
+	if (EquippedWeapon && Character.IsValid())
+	{
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
+	}
 }
