@@ -4,6 +4,8 @@
 #include "Character/BlasterAnimInstance.h"
 
 #include "BlasterCharacter.h"
+#include "KismetAnimationLibrary.h"
+
 #include "GameFramework/CharacterMovementComponent.h"
 
 void UBlasterAnimInstance::NativeInitializeAnimation()
@@ -28,4 +30,8 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bWeaponEquipped = BlasterCharacter->IsWeaponEquipped();
 	bIsCrouched = BlasterCharacter->bIsCrouched;
 	bIsAiming = BlasterCharacter->IsAiming();
+
+	FRotator AimRotation = BlasterCharacter->GetBaseAimRotation();
+	YawOffset = UKismetAnimationLibrary::CalculateDirection(Velocity, AimRotation);
+	UE_LOG(LogTemp, Warning, TEXT("YawOffset: %f"), YawOffset);
 }

@@ -42,7 +42,7 @@ ABlasterCharacter::ABlasterCharacter()
 	// 调整下蹲参数
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 	GetCharacterMovement()->MaxWalkSpeedCrouched = 100.f;
-	GetCharacterMovement()->CrouchedHalfHeight = 60.f;
+	GetCharacterMovement()->SetCrouchedHalfHeight(60.f);
 }
 
 void ABlasterCharacter::PostInitializeComponents()
