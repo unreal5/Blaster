@@ -38,6 +38,12 @@ private:
 	UPROPERTY(Replicated)
 	bool bAiming = false;
 
+	UPROPERTY(EditAnywhere)
+	float BaseWalkSpeed = 600.0f;
+	
+	UPROPERTY(EditAnywhere)
+	float AimWalkSpeed = 450.0f;
+	
 	UFUNCTION(Server, Reliable)
 	void Server_SetAiming(bool bNewAiming);
 

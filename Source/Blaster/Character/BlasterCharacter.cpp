@@ -6,6 +6,8 @@
 #include "BlasterComponent/CombatComponent.h"
 
 #include "Camera/CameraComponent.h"
+
+#include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -43,6 +45,9 @@ ABlasterCharacter::ABlasterCharacter()
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 	GetCharacterMovement()->MaxWalkSpeedCrouched = 100.f;
 	GetCharacterMovement()->SetCrouchedHalfHeight(60.f);
+
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 }
 
 void ABlasterCharacter::PostInitializeComponents()
@@ -147,6 +152,9 @@ void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	// 每帧更新瞄准偏移
+	AimOffset(DeltaTime);
 }
 
 void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -208,4 +216,7 @@ bool ABlasterCharacter::IsWeaponEquipped() const
 bool ABlasterCharacter::IsAiming() const
 {
 	return CombatComponent && CombatComponent->IsAiming();
+}
+void ABlasterCharacter::AimOffset(float DeltaTime)
+{
 }

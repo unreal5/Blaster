@@ -23,7 +23,8 @@ public:
 	virtual void BeginPlay() override;
 	virtual void NotifyControllerChanged() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
+protected:
+	void AimOffset(float DeltaTime);
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	USpringArmComponent* CameraBoom;
@@ -70,8 +71,12 @@ private:
 	UFUNCTION(Server, Reliable)
 	void Server_EquipButtonPressed();
 
+	float AO_Yaw;
+	float AO_Pitch;
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
 	bool IsWeaponEquipped() const;
 	bool IsAiming() const;
 };
+
+

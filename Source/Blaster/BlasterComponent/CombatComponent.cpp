@@ -34,7 +34,11 @@ void UCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	check((void*)GetOwner() == Character.Get());
+	//check((void*)GetOwner() == Character.Get());
+	if (Character.IsValid())
+	{
+		Character->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+	}
 }
 
 
@@ -83,9 +87,9 @@ void UCombatComponent::SetAiming(bool bNewAiming)
 	//如果位于客户端，则需要别的客户端也同步显示。
 	// 进一步思考，可以略过if判断（位于服务端时，会两次设置bAiming为同一值）
 	//if (!Character->HasAuthority())
-	{
-		Server_SetAiming(bNewAiming);
-	}
+	Server_SetAiming(bNewAiming);
+
+	Character->GetCharacterMovement()->MaxWalkSpeed = bAiming ? AimWalkSpeed : BaseWalkSpeed;
 }
 
 
@@ -94,6 +98,7 @@ void UCombatComponent::Server_SetAiming_Implementation(bool bNewAiming)
 	check(Character.IsValid() && Character->HasAuthority());
 
 	bAiming = bNewAiming;
+	Character->GetCharacterMovement()->MaxWalkSpeed = bAiming ? AimWalkSpeed : BaseWalkSpeed;
 }
 
 void UCombatComponent::OnRep_EquippedWeapon(AWeapon* OldWeapon)
