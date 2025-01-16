@@ -41,7 +41,7 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	FRotator Diff = UKismetMathLibrary::NormalizedDeltaRotator(MovementRotation, AimRotation);
 	DeltaRotation = FMath::RInterpTo(DeltaRotation, Diff, DeltaSeconds, 15.0f);
 	YawOffset = DeltaRotation.Yaw;
-	
+
 	CharacterRotationLastFrame = CharacterRotation;
 	CharacterRotation = BlasterCharacter->GetActorRotation();
 	const FRotator Delta = UKismetMathLibrary::NormalizedDeltaRotator(
@@ -51,5 +51,6 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Lean = FMath::Clamp(Interp, -90.0f, 90.0f);
 
 	// AimOffsets
-	
+	AO_Yaw = BlasterCharacter->GetAOYaw();
+	AO_Pitch = BlasterCharacter->GetAOPitch();
 }

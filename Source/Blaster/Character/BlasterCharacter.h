@@ -73,10 +73,14 @@ private:
 
 	float AO_Yaw;
 	float AO_Pitch;
+	FRotator StartingAimRotator;
+	
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
 	bool IsWeaponEquipped() const;
 	bool IsAiming() const;
+	float GetAOYaw() const { return AO_Yaw; }
+	float GetAOPitch() const { return AO_Pitch; }
 };
 
 

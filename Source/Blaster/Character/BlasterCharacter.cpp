@@ -12,6 +12,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 
+#include "Kismet/KismetMathLibrary.h"
+
 #include "Net/UnrealNetwork.h"
 
 #include "Weapon/Weapon.h"
@@ -217,6 +219,30 @@ bool ABlasterCharacter::IsAiming() const
 {
 	return CombatComponent && CombatComponent->IsAiming();
 }
+
 void ABlasterCharacter::AimOffset(float DeltaTime)
 {
+	if (!CombatComponent->GetEquippedWeapon())
+		return;
+
+	auto Velocity = GetVelocity();
+	Velocity.Z = 0;
+	auto Speed = Velocity.Size();
+	bool bIsInAir = GetCharacterMovement()->IsFalling();
+	if (FMath::IsNearlyZero(Speed) && !bIsInAir)
+	{
+		FRotator CurrentAimRotation = FRotator{0.f, GetBaseAimRotation().Yaw, 0.f};
+		FRotator DeltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotator);
+		AO_Yaw = DeltaAimRotation.Yaw;
+		bUseControllerRotationYaw = false;
+	}
+	if (!FMath::IsNearlyZero(Speed) || bIsInAir) // in air or moving
+	{
+		StartingAimRotator = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
+		AO_Yaw = 0.f;
+		bUseControllerRotationYaw = true;
+	}
+
+	AO_Pitch=GetBaseAimRotation().Pitch;
+	
 }
