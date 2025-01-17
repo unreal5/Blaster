@@ -235,14 +235,30 @@ void ABlasterCharacter::AimOffset(float DeltaTime)
 		FRotator DeltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotator);
 		AO_Yaw = DeltaAimRotation.Yaw;
 		bUseControllerRotationYaw = false;
+		if (!HasAuthority() && !IsLocallyControlled())
+		{
+			FString Msg = FString::Printf(TEXT("AO_Yaw: %f, Starting Yaw = %f, Current Yaw = %f"), AO_Yaw, StartingAimRotator.Yaw, CurrentAimRotation.Yaw);
+			GEngine->AddOnScreenDebugMessage(1, 0.1f, FColor::Red, Msg);
+		}
+		else if (HasAuthority())
+		{
+			FString Msg = FString::Printf(TEXT("AO_Yaw: %f, Starting Yaw = %f, Current Yaw = %f"), AO_Yaw, StartingAimRotator.Yaw, CurrentAimRotation.Yaw);
+			GEngine->AddOnScreenDebugMessage(2, 0.1f, FColor::Green, Msg);
+		}
 	}
-	if (!FMath::IsNearlyZero(Speed) || bIsInAir) // in air or moving
+	else // in air or moving
 	{
 		StartingAimRotator = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		AO_Yaw = 0.f;
 		bUseControllerRotationYaw = true;
 	}
 
-	AO_Pitch=GetBaseAimRotation().Pitch;
-	
+	AO_Pitch = GetBaseAimRotation().Pitch;
+	if (AO_Pitch > 90.f)
+	{
+		// fix the pitch value when looking up
+		FVector2D InRange{270.f, 360.f};
+		FVector2D OutRange{-90.f, 0.f};
+		AO_Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRange, AO_Pitch);
+	}
 }
