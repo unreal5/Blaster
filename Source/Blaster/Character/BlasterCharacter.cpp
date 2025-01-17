@@ -220,6 +220,11 @@ bool ABlasterCharacter::IsAiming() const
 	return CombatComponent && CombatComponent->IsAiming();
 }
 
+AWeapon* ABlasterCharacter::GetEquippedWeapon() const
+{
+	return CombatComponent ? CombatComponent->GetEquippedWeapon() : nullptr;
+}
+
 void ABlasterCharacter::AimOffset(float DeltaTime)
 {
 	if (!CombatComponent->GetEquippedWeapon())

@@ -10,6 +10,8 @@
 
 #include "Kismet/KismetMathLibrary.h"
 
+#include "Weapon/Weapon.h"
+
 void UBlasterAnimInstance::NativeInitializeAnimation()
 {
 	BlasterCharacter = Cast<ABlasterCharacter>(GetOwningActor());
@@ -30,6 +32,7 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bIsAccelerating = BlasterCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0;
 
 	bWeaponEquipped = BlasterCharacter->IsWeaponEquipped();
+	EquippedWeapon = BlasterCharacter->GetEquippedWeapon();
 	bIsCrouched = BlasterCharacter->bIsCrouched;
 	bIsAiming = BlasterCharacter->IsAiming();
 
@@ -53,4 +56,18 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	// AimOffsets
 	AO_Yaw = BlasterCharacter->GetAOYaw();
 	AO_Pitch = BlasterCharacter->GetAOPitch();
+
+	// Left hand IK
+	auto WeaponMesh = EquippedWeapon ? EquippedWeapon->GetWeaponMesh() : nullptr;
+	auto BlasterMesh = BlasterCharacter->GetMesh();
+	if (bWeaponEquipped && EquippedWeapon && WeaponMesh && BlasterMesh)
+	{
+		LeftHandTransform = WeaponMesh->GetSocketTransform("LeftHandSocket", ERelativeTransformSpace::RTS_World);
+		FVector OutPosition;
+		FRotator OutRotation;
+		BlasterMesh->TransformToBoneSpace(FName("hand_r"), LeftHandTransform.GetLocation(), FRotator::ZeroRotator,
+		                                  OutPosition, OutRotation);
+		LeftHandTransform.SetLocation(OutPosition);
+		LeftHandTransform.SetRotation(FQuat{OutRotation});
+	}
 }

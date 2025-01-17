@@ -81,6 +81,7 @@ public:
 	bool IsAiming() const;
 	float GetAOYaw() const { return AO_Yaw; }
 	float GetAOPitch() const { return AO_Pitch; }
+	AWeapon* GetEquippedWeapon() const;
 };
 
 
