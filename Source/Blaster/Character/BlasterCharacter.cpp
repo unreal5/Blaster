@@ -32,8 +32,9 @@ ABlasterCharacter::ABlasterCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
-	bUseControllerRotationYaw = false;
+	bUseControllerRotationYaw = true;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f);
 
 	OverheadWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidgetComponent"));
 	OverheadWidgetComponent->SetupAttachment(RootComponent);
@@ -50,6 +51,10 @@ ABlasterCharacter::ABlasterCharacter()
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+
+	// 设置网络更新频率
+	SetNetUpdateFrequency(66.f);
+	SetMinNetUpdateFrequency(33.f);
 }
 
 void ABlasterCharacter::PostInitializeComponents()
@@ -81,6 +86,18 @@ void ABlasterCharacter::NotifyControllerChanged()
 	if (!Subsystem) return;
 
 	Subsystem->AddMappingContext(DefaultMappingContext, 0);
+}
+
+void ABlasterCharacter::Jump()
+{
+	if (bIsCrouched)
+	{
+		UnCrouch();
+	}
+	else
+	{
+		Super::Jump();
+	}
 }
 
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -135,6 +152,7 @@ void ABlasterCharacter::Server_EquipButtonPressed_Implementation()
 	CombatComponent->EquipWeapon(OverlappingWeapon);
 }
 
+
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 {
 	if (OverlappingWeapon != Weapon)
@@ -178,8 +196,8 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	};
 	EnhancedInputComponent->BindActionValueLambda(MoveAction, ETriggerEvent::Triggered, MoveActionLambda);
 
-	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ThisClass::Jump);
+	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ThisClass::StopJumping);
 
 	auto LookActionLambda = [this](const FInputActionValue& Value)
 	{
@@ -225,6 +243,33 @@ AWeapon* ABlasterCharacter::GetEquippedWeapon() const
 	return CombatComponent ? CombatComponent->GetEquippedWeapon() : nullptr;
 }
 
+void ABlasterCharacter::TurnInPlace(float DeltaTime)
+{
+	//UE_LOG(LogTemp, Warning, TEXT("AO_Yaw: %f"), AO_Yaw);
+	if (AO_Yaw > 90.f)
+	{
+		TurningInPlace = ETurningInPlace::ETIP_Right;
+	}
+	else if (AO_Yaw < -90.f)
+	{
+		TurningInPlace = ETurningInPlace::ETIP_Left;
+	}
+
+	// 正在转身
+	if (TurningInPlace != ETurningInPlace::ETIP_NotTurning)
+	{
+		InterpAO_Yaw = FMath::FInterpTo(InterpAO_Yaw, 0.f, DeltaTime, 10.f);
+		AO_Yaw = InterpAO_Yaw;
+
+		if (FMath::Abs(AO_Yaw) < 15.f) // 转身结束
+		{
+			TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+			// 记录起始瞄准角度
+			StartingAimRotator = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
+		}
+	}
+}
+
 void ABlasterCharacter::AimOffset(float DeltaTime)
 {
 	if (!CombatComponent->GetEquippedWeapon())
@@ -234,28 +279,22 @@ void ABlasterCharacter::AimOffset(float DeltaTime)
 	Velocity.Z = 0;
 	auto Speed = Velocity.Size();
 	bool bIsInAir = GetCharacterMovement()->IsFalling();
-	if (FMath::IsNearlyZero(Speed) && !bIsInAir)
+	if (FMath::IsNearlyZero(Speed) && !bIsInAir) // standing still, not jumping
 	{
 		FRotator CurrentAimRotation = FRotator{0.f, GetBaseAimRotation().Yaw, 0.f};
 		FRotator DeltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotator);
 		AO_Yaw = DeltaAimRotation.Yaw;
-		bUseControllerRotationYaw = false;
-		if (!HasAuthority() && !IsLocallyControlled())
+		if (TurningInPlace == ETurningInPlace::ETIP_NotTurning)
 		{
-			FString Msg = FString::Printf(TEXT("AO_Yaw: %f, Starting Yaw = %f, Current Yaw = %f"), AO_Yaw, StartingAimRotator.Yaw, CurrentAimRotation.Yaw);
-			GEngine->AddOnScreenDebugMessage(1, 0.1f, FColor::Red, Msg);
+			InterpAO_Yaw = AO_Yaw;
 		}
-		else if (HasAuthority())
-		{
-			FString Msg = FString::Printf(TEXT("AO_Yaw: %f, Starting Yaw = %f, Current Yaw = %f"), AO_Yaw, StartingAimRotator.Yaw, CurrentAimRotation.Yaw);
-			GEngine->AddOnScreenDebugMessage(2, 0.1f, FColor::Green, Msg);
-		}
+		TurnInPlace(DeltaTime);
 	}
 	else // in air or moving
 	{
 		StartingAimRotator = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		AO_Yaw = 0.f;
-		bUseControllerRotationYaw = true;
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 	}
 
 	AO_Pitch = GetBaseAimRotation().Pitch;

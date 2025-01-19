@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "InputMappingContext.h"
+#include "BlasterTypes/TurningInPlace.h"
 #include "GameFramework/Character.h"
 #include "BlasterCharacter.generated.h"
 
@@ -23,6 +24,7 @@ public:
 	virtual void BeginPlay() override;
 	virtual void NotifyControllerChanged() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void Jump() override;
 protected:
 	void AimOffset(float DeltaTime);
 private:
@@ -72,9 +74,13 @@ private:
 	void Server_EquipButtonPressed();
 
 	float AO_Yaw;
+	float InterpAO_Yaw;
 	float AO_Pitch;
 	FRotator StartingAimRotator;
-	
+
+	// turning in place
+	ETurningInPlace TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+	void TurnInPlace(float DeltaTime);
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
 	bool IsWeaponEquipped() const;
@@ -82,6 +88,10 @@ public:
 	float GetAOYaw() const { return AO_Yaw; }
 	float GetAOPitch() const { return AO_Pitch; }
 	AWeapon* GetEquippedWeapon() const;
+	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
+	
 };
+
+
 
 
