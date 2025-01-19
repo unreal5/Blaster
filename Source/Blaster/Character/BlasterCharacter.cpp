@@ -146,6 +146,16 @@ void ABlasterCharacter::AimButtonReleased()
 	CombatComponent->SetAiming(false);
 }
 
+// void ABlasterCharacter::FireButtonPressed()
+// {
+// 	CombatComponent->FireButtonPressed(true);
+// }
+//
+// void ABlasterCharacter::FireButtonReleased()
+// {
+// 	CombatComponent->FireButtonPressed(false);
+// }
+
 void ABlasterCharacter::Server_EquipButtonPressed_Implementation()
 {
 	if (!OverlappingWeapon) return;
@@ -215,17 +225,23 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 	// 装备武器
 	EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this,
-	                                   &ABlasterCharacter::EquipButtonPressed);
+	                                   &ThisClass::EquipButtonPressed);
 
 	// 下蹲
 	EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this,
-	                                   &ABlasterCharacter::CrouchButtonPressed);
+	                                   &ThisClass::CrouchButtonPressed);
 
 	// 瞄准
 	EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this,
-	                                   &ABlasterCharacter::AimButtonPressed);
+	                                   &ThisClass::AimButtonPressed);
 	EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this,
-	                                   &ABlasterCharacter::AimButtonReleased);
+	                                   &ThisClass::AimButtonReleased);
+
+	// 开火
+	EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, CombatComponent,
+	                                   &UCombatComponent::FireButtonPressed, true);
+	EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, CombatComponent,
+	                                   &UCombatComponent::FireButtonPressed, false);
 }
 
 bool ABlasterCharacter::IsWeaponEquipped() const
@@ -241,6 +257,19 @@ bool ABlasterCharacter::IsAiming() const
 AWeapon* ABlasterCharacter::GetEquippedWeapon() const
 {
 	return CombatComponent ? CombatComponent->GetEquippedWeapon() : nullptr;
+}
+
+void ABlasterCharacter::PlayFireMontage(bool bAiming)
+{
+	if (CombatComponent->GetEquippedWeapon() == nullptr) return;
+
+	// UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	// if (AnimInstance == nullptr || FireWeaponMontage == nullptr) return;
+	//
+	// AnimInstance->Montage_Play(FireWeaponMontage);
+	FName SectionName = bAiming ? TEXT("RifleAim") : TEXT("RifleHip");
+	// AnimInstance->Montage_JumpToSection(SectionName, FireWeaponMontage);
+	PlayAnimMontage(FireWeaponMontage,1.f,SectionName);
 }
 
 void ABlasterCharacter::TurnInPlace(float DeltaTime)

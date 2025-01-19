@@ -48,6 +48,8 @@ private:
 	UInputAction* CrouchAction;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* AimAction;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* FireAction;
 	// widget
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = UI, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* OverheadWidgetComponent;
@@ -73,6 +75,9 @@ private:
 	UFUNCTION(Server, Reliable)
 	void Server_EquipButtonPressed();
 
+	// 开火
+	//void FireButtonPressed();
+	//void FireButtonReleased();
 	float AO_Yaw;
 	float InterpAO_Yaw;
 	float AO_Pitch;
@@ -81,6 +86,9 @@ private:
 	// turning in place
 	ETurningInPlace TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 	void TurnInPlace(float DeltaTime);
+
+	UPROPERTY(EditDefaultsOnly, Category=Combat, meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UAnimMontage> FireWeaponMontage;
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
 	bool IsWeaponEquipped() const;
@@ -89,7 +97,7 @@ public:
 	float GetAOPitch() const { return AO_Pitch; }
 	AWeapon* GetEquippedWeapon() const;
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
-	
+	void PlayFireMontage(bool bAiming);	
 };
 
 

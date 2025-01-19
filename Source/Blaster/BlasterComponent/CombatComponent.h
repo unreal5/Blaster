@@ -26,6 +26,8 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void SetAiming(bool bNewAiming);
+
+	void FireButtonPressed(bool bPressed);
 private:
 	TWeakObjectPtr<ABlasterCharacter> Character;
 
@@ -47,6 +49,8 @@ private:
 	UFUNCTION(Server, Reliable)
 	void Server_SetAiming(bool bNewAiming);
 
+
+	bool bFireButtonPressed = false;
 public:
 	AWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
 	bool IsAiming() const { return bAiming; }
