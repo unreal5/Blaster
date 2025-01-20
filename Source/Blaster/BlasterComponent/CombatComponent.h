@@ -58,6 +58,7 @@ private:
 	bool bFireButtonPressed = false;
 
 	void TraceUnderCrosshair(FHitResult& TraceHitResult);
+	FVector HitTarget;
 public:
 	AWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
 	bool IsAiming() const { return bAiming; }
