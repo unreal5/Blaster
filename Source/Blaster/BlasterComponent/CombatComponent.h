@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "CombatComponent.generated.h"
 
-
+const float TRACE_LENGTH = 80000.0f;
 class AWeapon;
 class ABlasterCharacter;
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -28,6 +28,9 @@ public:
 	void SetAiming(bool bNewAiming);
 
 	void FireButtonPressed(bool bPressed);
+protected:
+	UFUNCTION(Server, Reliable)
+	void Server_Fire();
 private:
 	TWeakObjectPtr<ABlasterCharacter> Character;
 
@@ -49,8 +52,12 @@ private:
 	UFUNCTION(Server, Reliable)
 	void Server_SetAiming(bool bNewAiming);
 
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_Fire();
 
 	bool bFireButtonPressed = false;
+
+	void TraceUnderCrosshair(FHitResult& TraceHitResult);
 public:
 	AWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
 	bool IsAiming() const { return bAiming; }
