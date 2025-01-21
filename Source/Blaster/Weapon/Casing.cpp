@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
+#include "Weapon/Casing.h"
 #include "Kismet/GameplayStatics.h"
 
 #include "Sound/SoundCue.h"
 
-#include "Weapon/Casing.h"
+
 
 ACasing::ACasing()
 {
