@@ -9,7 +9,9 @@ namespace
 {
 	FString GetEnumDisplayName(ENetRole Role)
 	{
+#pragma warning(disable:4996)
 		const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("ENetRole"), true);
+#pragma warning(default: 4996)
 		if (!EnumPtr)
 		{
 			return FString("Invalid");

@@ -1,13 +1,16 @@
-
-
 #include "Weapon/Projectile.h"
 
 #include "Components/BoxComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
+#include "Kismet/GameplayStatics.h"
+
+#include "Sound/SoundCue.h"
+
 AProjectile::AProjectile()
 {
 	PrimaryActorTick.bCanEverTick = false;
+	bReplicates = true;
 
 	CollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionBox"));
 	SetRootComponent(CollisionBox);
@@ -24,12 +27,40 @@ AProjectile::AProjectile()
 	ProjectileMovement->bRotationFollowsVelocity = true;
 	ProjectileMovement->bShouldBounce = false;
 	ProjectileMovement->ProjectileGravityScale = 0.f;
-	
 }
 
 void AProjectile::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	if (Tracer.Get())
+	{
+		TracerComponent = UGameplayStatics::SpawnEmitterAttached(Tracer.Get(), RootComponent, NAME_None,
+		                                                         /*bone name,但我们不需要挂接到骨骼上，所以传入NAME_None*/
+		                                                         GetActorLocation(), GetActorRotation(),
+		                                                         EAttachLocation::KeepWorldPosition);
+	}
+	if (HasAuthority())
+	{
+		CollisionBox->OnComponentHit.AddDynamic(this, &ThisClass::OnHit);
+	}
 }
 
+void AProjectile::Destroyed()
+{
+	Super::Destroyed();
+	if (ImpactParticle)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticle, GetActorLocation(),
+		                                         GetActorRotation());
+	}
+	if (ImpactSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
+	}
+}
+
+void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+                        FVector NormalImpulse, const FHitResult& Hit)
+{
+	Destroy();
+}

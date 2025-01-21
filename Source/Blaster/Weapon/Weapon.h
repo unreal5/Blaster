@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
+class ACasing;
 class UWidgetComponent;
 
 UENUM(BlueprintType)
@@ -41,6 +42,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Properties")
 	TObjectPtr<UAnimationAsset> FireAnimation;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Properties")
+	TSubclassOf<ACasing> CasingClass;
 private:
 	UFUNCTION()
 	void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);

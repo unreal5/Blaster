@@ -30,7 +30,7 @@ public:
 	void FireButtonPressed(bool bPressed);
 protected:
 	UFUNCTION(Server, Reliable)
-	void Server_Fire();
+	void Server_Fire(const FVector_NetQuantize& TraceHitTarget);
 private:
 	TWeakObjectPtr<ABlasterCharacter> Character;
 
@@ -53,12 +53,12 @@ private:
 	void Server_SetAiming(bool bNewAiming);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_Fire();
+	void Multicast_Fire(const FVector_NetQuantize& TraceHitTarget);
 
 	bool bFireButtonPressed = false;
 
 	void TraceUnderCrosshair(FHitResult& TraceHitResult);
-	FVector HitTarget;
+	
 public:
 	AWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
 	bool IsAiming() const { return bAiming; }
