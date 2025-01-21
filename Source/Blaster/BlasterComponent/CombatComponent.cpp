@@ -5,7 +5,6 @@
 
 #include "Character/BlasterCharacter.h"
 
-#include "Components/SphereComponent.h"
 
 #include "Engine/SkeletalMeshSocket.h"
 
@@ -16,7 +15,8 @@
 #include "Net/UnrealNetwork.h"
 
 #include "Weapon/Weapon.h"
-
+#include "PlayerController/BlasterPlayerController.h"
+#include "Hud/BlasterHUD.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -43,14 +43,48 @@ void UCombatComponent::BeginPlay()
 	}
 }
 
+void UCombatComponent::SetHudCrosshair(float DeltaTime)
+{
+	if (!Character.IsValid() || Character->Controller == nullptr) return;
+
+	if (!BlasterPlayerController.IsValid())
+	{
+		BlasterPlayerController = Character->GetController<ABlasterPlayerController>();
+		if (BlasterPlayerController.IsValid())
+		{
+			BlasterHUD = BlasterPlayerController->GetHUD<ABlasterHUD>();
+		}
+	}
+	if (BlasterHUD.IsValid()  )
+	{
+		
+		FHUDPackage HUDPackage;
+		if (EquippedWeapon)
+		{
+			HUDPackage.CrosshairCenter = EquippedWeapon->CrosshairCenter;
+			HUDPackage.CrosshairLeft = EquippedWeapon->CrosshairLeft;
+			HUDPackage.CrosshairRight = EquippedWeapon->CrosshairRight;
+			HUDPackage.CrosshairTop = EquippedWeapon->CrosshairTop;
+			HUDPackage.CrosshairBottom = EquippedWeapon->CrosshairBottom;
+		}
+		else
+		{
+			HUDPackage.CrosshairCenter = nullptr;
+			HUDPackage.CrosshairLeft = nullptr;
+			HUDPackage.CrosshairRight = nullptr;
+			HUDPackage.CrosshairTop = nullptr;
+			HUDPackage.CrosshairBottom = nullptr;
+		}
+		BlasterHUD->SetHudPackage(HUDPackage);
+	}
+}
 
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                      FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// FHitResult HitResult;
-	// TraceUnderCrosshair(HitResult);
+	SetHudCrosshair(DeltaTime);
 }
 
 void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
@@ -153,7 +187,6 @@ void UCombatComponent::TraceUnderCrosshair(FHitResult& TraceHitResult)
 		{
 			TraceHitResult.ImpactPoint = TraceEnd;
 		}
-
 	}
 }
 
@@ -168,6 +201,7 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 		Server_Fire(HitResult.ImpactPoint);
 	}
 }
+
 
 void UCombatComponent::Server_Fire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {

@@ -7,8 +7,25 @@
 #include "BlasterHUD.generated.h"
 
 /**
- * 
+ * HUD for the Blaster game
  */
+USTRUCT(BlueprintType)
+struct FHUDPackage
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	UTexture2D* CrosshairCenter;
+	UPROPERTY()
+	UTexture2D* CrosshairLeft;
+	UPROPERTY()
+	UTexture2D* CrosshairRight;
+	UPROPERTY()
+	UTexture2D* CrosshairTop;
+	UPROPERTY()
+	UTexture2D* CrosshairBottom;
+};
+
 UCLASS()
 class BLASTER_API ABlasterHUD : public AHUD
 {
@@ -16,4 +33,10 @@ class BLASTER_API ABlasterHUD : public AHUD
 
 public:
 	virtual void DrawHUD() override;
+private:
+	FHUDPackage HUDPackage;
+	void DrawCrosshair(UTexture2D* Texture, FVector2D ViewportCenter);
+public:
+	FORCEINLINE void SetHudPackage(const FHUDPackage& Package) { HUDPackage = Package; }
+	
 };

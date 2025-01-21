@@ -6,6 +6,8 @@
 #include "Components/ActorComponent.h"
 #include "CombatComponent.generated.h"
 
+class ABlasterHUD;
+class ABlasterPlayerController;
 const float TRACE_LENGTH = 80000.0f;
 class AWeapon;
 class ABlasterCharacter;
@@ -31,8 +33,12 @@ public:
 protected:
 	UFUNCTION(Server, Reliable)
 	void Server_Fire(const FVector_NetQuantize& TraceHitTarget);
+
+	void SetHudCrosshair(float DeltaTime);
 private:
 	TWeakObjectPtr<ABlasterCharacter> Character;
+	TWeakObjectPtr<ABlasterPlayerController> BlasterPlayerController;
+	TWeakObjectPtr<ABlasterHUD> BlasterHUD;
 
 	UFUNCTION()
 	void OnRep_EquippedWeapon(AWeapon* OldWeapon);

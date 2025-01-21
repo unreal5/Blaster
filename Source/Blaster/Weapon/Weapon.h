@@ -27,6 +27,18 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	void ShowPickupWidget(bool bShowWidget);
+
+	/* 武器十字线纹理 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Properties")
+	TObjectPtr<UTexture2D> CrosshairCenter;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Properties")
+	TObjectPtr<UTexture2D> CrosshairLeft;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Properties")
+	TObjectPtr<UTexture2D> CrosshairRight;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Properties")
+	TObjectPtr<UTexture2D> CrosshairTop;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Properties")
+	TObjectPtr<UTexture2D> CrosshairBottom;
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon Properties")
 	class USkeletalMeshComponent* WeaponMesh;
@@ -45,19 +57,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Properties")
 	TSubclassOf<ACasing> CasingClass;
-
-	/* 武器十字线纹理 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Properties")
-	TObjectPtr<UTexture2D> CrosshairCenter;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Properties")
-	TObjectPtr<UTexture2D> CrosshairLeft;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Properties")
-	TObjectPtr<UTexture2D> CrosshairRight;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Properties")
-	TObjectPtr<UTexture2D> CrosshairTop;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Properties")
-	TObjectPtr<UTexture2D> CrosshairBottom;
-	
 private:
 	UFUNCTION()
 	void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
