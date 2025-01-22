@@ -11,6 +11,7 @@ class ABlasterPlayerController;
 const float TRACE_LENGTH = 80000.0f;
 class AWeapon;
 class ABlasterCharacter;
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class BLASTER_API UCombatComponent : public UActorComponent
 {
@@ -30,11 +31,13 @@ public:
 	void SetAiming(bool bNewAiming);
 
 	void FireButtonPressed(bool bPressed);
+
 protected:
 	UFUNCTION(Server, Reliable)
 	void Server_Fire(const FVector_NetQuantize& TraceHitTarget);
 
 	void SetHudCrosshair(float DeltaTime);
+
 private:
 	TWeakObjectPtr<ABlasterCharacter> Character;
 	TWeakObjectPtr<ABlasterPlayerController> BlasterPlayerController;
@@ -42,7 +45,7 @@ private:
 
 	UFUNCTION()
 	void OnRep_EquippedWeapon(AWeapon* OldWeapon);
-	
+
 	UPROPERTY(ReplicatedUsing=OnRep_EquippedWeapon)
 	AWeapon* EquippedWeapon;
 
@@ -51,10 +54,10 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float BaseWalkSpeed = 600.0f;
-	
+
 	UPROPERTY(EditAnywhere)
 	float AimWalkSpeed = 450.0f;
-	
+
 	UFUNCTION(Server, Reliable)
 	void Server_SetAiming(bool bNewAiming);
 
@@ -64,11 +67,12 @@ private:
 	bool bFireButtonPressed = false;
 
 	void TraceUnderCrosshair(FHitResult& TraceHitResult);
-	
+
+	/* Hud and crosshair */
+	float CrosshairVelocityFactor = 0.f;
+	float CrosshairInAirFactor = 0.f;
+
 public:
 	AWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
 	bool IsAiming() const { return bAiming; }
 };
-
-
-
