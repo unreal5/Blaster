@@ -100,6 +100,8 @@ public:
 	void PlayFireMontage(bool bAiming);
 
 	FVector GetHitTarget() const;
+
+	FORCEINLINE UCameraComponent *GetFollowCamera() const { return FollowCamera; }
 };
 
 

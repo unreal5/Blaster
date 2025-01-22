@@ -74,7 +74,22 @@ private:
 
 	// 准星碰撞的位置
 	FVector HitTarget;
+
+	/*
+	 * Aiming and FOV
+	 */
+
+	/** Field of view when not aiming;set to camera's base FOV in beginplay*/
+	float DefaultFOV = 0.0f;
+	UPROPERTY(EditDefaultsOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	float ZoomedFOV = 30.0f;
+
+	float CurrentFOV = 0.0f;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	float ZoomInterpSpeed = 20.0f;
+
+	void InterpFOV(float DeltaTime);
 public:
 	AWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
 	bool IsAiming() const { return bAiming; }

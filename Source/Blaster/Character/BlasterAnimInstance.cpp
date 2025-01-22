@@ -69,7 +69,7 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		FVector OutPosition;
 		FRotator OutRotation;
 		BlasterMesh->TransformToBoneSpace(FName("hand_r"), LeftHandTransform.GetLocation(), FRotator::ZeroRotator,
-		                                  OutPosition, OutRotation);
+										  OutPosition, OutRotation);
 		LeftHandTransform.SetLocation(OutPosition);
 		LeftHandTransform.SetRotation(FQuat{OutRotation});
 
@@ -77,18 +77,22 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		 * 修正武器方向与上瞄准方向不一致的问题
 		 */
 
-		// 骨骼名不区分大小写
-		// 右手位置
-		FTransform RightHandTransform = WeaponMesh->GetSocketTransform("Hand_R", ERelativeTransformSpace::RTS_World);
-		// 目标位置
-		auto HitTarget = BlasterCharacter->GetHitTarget();
-		//右手前向指向父骨骼，要取反向
-		///*UKismetMathLibrary::FindLookAtRotation(RightHandTransform.GetLocation(),
-		//		                                                           RightHandTransform.GetLocation() +
-		//		                                                           (RightHandTransform.GetLocation() - HitTarget));
-		//		                                                           */
-		RightHandRotation = UKismetMathLibrary::FindLookAtRotation(HitTarget, RightHandTransform.GetLocation());
-
+		bLocallyControlled = BlasterCharacter->IsLocallyControlled();
+		if (bLocallyControlled)
+		{
+			// 骨骼名不区分大小写
+			// 右手位置
+			FTransform RightHandTransform = WeaponMesh->GetSocketTransform("Hand_R", ERelativeTransformSpace::RTS_World);
+			// 目标位置
+			auto HitTarget = BlasterCharacter->GetHitTarget();
+		
+			//右手前向指向父骨骼，要取反向
+			///*UKismetMathLibrary::FindLookAtRotation(RightHandTransform.GetLocation(),
+			//		                                                           RightHandTransform.GetLocation() +
+			//		                                                           (RightHandTransform.GetLocation() - HitTarget));
+			//		                                                           */
+			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(HitTarget, RightHandTransform.GetLocation());
+		}
 		// 调试绘制
 		/*
 		// 1. 获取武器的MuzzleFlash位置

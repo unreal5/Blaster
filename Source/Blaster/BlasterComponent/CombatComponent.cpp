@@ -3,6 +3,7 @@
 
 #include "BlasterComponent/CombatComponent.h"
 
+#include "Camera/CameraComponent.h"
 #include "Character/BlasterCharacter.h"
 
 
@@ -40,7 +41,14 @@ void UCombatComponent::BeginPlay()
 	if (Character.IsValid())
 	{
 		Character->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+		if (Character->GetFollowCamera())
+		{
+			CurrentFOV = DefaultFOV = Character->GetFollowCamera()->FieldOfView;
+			
+		}
 	}
+
+	
 }
 
 void UCombatComponent::SetHudCrosshair(float DeltaTime)
@@ -101,7 +109,7 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	SetHudCrosshair(DeltaTime);
+	
 
 	// 只有本机控制的角色才能进行射击
 	if (Character.IsValid() && Character->IsLocallyControlled())
@@ -109,11 +117,17 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		FHitResult HitResult;
 		TraceUnderCrosshair(HitResult);
 		HitTarget = HitResult.ImpactPoint;
+
+		SetHudCrosshair(DeltaTime);
+		// FOV
+		InterpFOV(DeltaTime);
 	}
 	else
 	{
 		HitTarget = FVector::ZeroVector;
 	}
+
+	
 }
 
 void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
@@ -216,6 +230,24 @@ void UCombatComponent::TraceUnderCrosshair(FHitResult& TraceHitResult)
 		{
 			TraceHitResult.ImpactPoint = TraceEnd;
 		}
+	}
+}
+
+void UCombatComponent::InterpFOV(float DeltaTime)
+{
+	if (EquippedWeapon == nullptr) return;
+
+	if (bAiming)
+	{
+		CurrentFOV = FMath::FInterpTo(CurrentFOV, EquippedWeapon->GetZoomedFOV(), DeltaTime, EquippedWeapon->GetZoomInterpSpeed());
+	}
+	else
+	{
+		CurrentFOV = FMath::FInterpTo(CurrentFOV, DefaultFOV, DeltaTime, EquippedWeapon->GetZoomInterpSpeed());
+	}
+	if (Character.IsValid() && Character->GetFollowCamera())
+	{
+		Character->GetFollowCamera()->SetFieldOfView(CurrentFOV);
 	}
 }
 
