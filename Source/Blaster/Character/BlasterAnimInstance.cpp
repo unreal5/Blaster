@@ -38,7 +38,7 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	// Turn in place
 	TurningInPlace = BlasterCharacter->GetTurningInPlace();
-	
+
 	FRotator AimRotation = BlasterCharacter->GetBaseAimRotation();
 
 	// offset yaw for strafing
@@ -72,5 +72,37 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		                                  OutPosition, OutRotation);
 		LeftHandTransform.SetLocation(OutPosition);
 		LeftHandTransform.SetRotation(FQuat{OutRotation});
+
+		/**
+		 * 修正武器方向与上瞄准方向不一致的问题
+		 */
+
+		// 骨骼名不区分大小写
+		// 右手位置
+		FTransform RightHandTransform = WeaponMesh->GetSocketTransform("Hand_R", ERelativeTransformSpace::RTS_World);
+		// 目标位置
+		auto HitTarget = BlasterCharacter->GetHitTarget();
+		//右手前向指向父骨骼，要取反向
+		///*UKismetMathLibrary::FindLookAtRotation(RightHandTransform.GetLocation(),
+		//		                                                           RightHandTransform.GetLocation() +
+		//		                                                           (RightHandTransform.GetLocation() - HitTarget));
+		//		                                                           */
+		RightHandRotation = UKismetMathLibrary::FindLookAtRotation(HitTarget, RightHandTransform.GetLocation());
+
+		// 调试绘制
+		/*
+		// 1. 获取武器的MuzzleFlash位置
+		FTransform MuzzleTipTransform = WeaponMesh->GetSocketTransform("MuzzleFlash",
+		                                                               ERelativeTransformSpace::RTS_World);
+		FVector MuzzleX = FRotationMatrix{MuzzleTipTransform.GetRotation().Rotator()}.GetUnitAxis(EAxis::X);
+
+		auto World = GetWorld();
+		// 2. 画出MuzzleFlash的方向
+		DrawDebugLine(World, MuzzleTipTransform.GetLocation(), MuzzleTipTransform.GetLocation() + MuzzleX * 10000.f,
+		              FColor::Red, false, 0.f, 0, 2);
+
+		// 绘制瞄准方向
+		DrawDebugLine(World, MuzzleTipTransform.GetLocation(), HitTarget, FColor::Blue, false, 0.f, 0, 2);
+		*/
 	}
 }

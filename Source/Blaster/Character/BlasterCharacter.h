@@ -97,7 +97,9 @@ public:
 	float GetAOPitch() const { return AO_Pitch; }
 	AWeapon* GetEquippedWeapon() const;
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
-	void PlayFireMontage(bool bAiming);	
+	void PlayFireMontage(bool bAiming);
+
+	FVector GetHitTarget() const;
 };
 
 

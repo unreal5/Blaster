@@ -66,4 +66,7 @@ private:
 
 	UPROPERTY(BlueprintReadWrite, Category = "Turning In Place", meta = (AllowPrivateAccess = "true"))
 	ETurningInPlace TurningInPlace;
+
+	UPROPERTY(BlueprintReadWrite, Category = "手部变量", meta = (AllowPrivateAccess = "true"))
+	FRotator RightHandRotation;
 };

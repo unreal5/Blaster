@@ -72,7 +72,11 @@ private:
 	float CrosshairVelocityFactor = 0.f;
 	float CrosshairInAirFactor = 0.f;
 
+	// 准星碰撞的位置
+	FVector HitTarget;
+	
 public:
 	AWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
 	bool IsAiming() const { return bAiming; }
+	FORCEINLINE FVector GetHitTarget() const { return HitTarget; }
 };

@@ -269,7 +269,12 @@ void ABlasterCharacter::PlayFireMontage(bool bAiming)
 	// AnimInstance->Montage_Play(FireWeaponMontage);
 	FName SectionName = bAiming ? TEXT("RifleAim") : TEXT("RifleHip");
 	// AnimInstance->Montage_JumpToSection(SectionName, FireWeaponMontage);
-	PlayAnimMontage(FireWeaponMontage,1.f,SectionName);
+	PlayAnimMontage(FireWeaponMontage, 1.f, SectionName);
+}
+
+FVector ABlasterCharacter::GetHitTarget() const
+{
+	return CombatComponent ? CombatComponent->GetHitTarget() : FVector::ZeroVector;
 }
 
 void ABlasterCharacter::TurnInPlace(float DeltaTime)

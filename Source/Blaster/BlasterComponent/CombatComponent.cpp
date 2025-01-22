@@ -102,6 +102,18 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	SetHudCrosshair(DeltaTime);
+
+	// 只有本机控制的角色才能进行射击
+	if (Character.IsValid() && Character->IsLocallyControlled())
+	{
+		FHitResult HitResult;
+		TraceUnderCrosshair(HitResult);
+		HitTarget = HitResult.ImpactPoint;
+	}
+	else
+	{
+		HitTarget = FVector::ZeroVector;
+	}
 }
 
 void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
