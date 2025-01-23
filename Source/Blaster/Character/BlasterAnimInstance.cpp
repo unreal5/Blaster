@@ -85,13 +85,10 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			FTransform RightHandTransform = WeaponMesh->GetSocketTransform("Hand_R", ERelativeTransformSpace::RTS_World);
 			// 目标位置
 			auto HitTarget = BlasterCharacter->GetHitTarget();
-		
+
+			FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(HitTarget, RightHandTransform.GetLocation());
 			//右手前向指向父骨骼，要取反向
-			///*UKismetMathLibrary::FindLookAtRotation(RightHandTransform.GetLocation(),
-			//		                                                           RightHandTransform.GetLocation() +
-			//		                                                           (RightHandTransform.GetLocation() - HitTarget));
-			//		                                                           */
-			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(HitTarget, RightHandTransform.GetLocation());
+			RightHandRotation = FMath::RInterpTo(RightHandRotation, LookAtRotation, DeltaSeconds, 30.f);
 		}
 		// 调试绘制
 		/*
