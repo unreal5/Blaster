@@ -51,7 +51,7 @@ ABlasterCharacter::ABlasterCharacter()
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-
+	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	// 设置网络更新频率
 	SetNetUpdateFrequency(66.f);
 	SetMinNetUpdateFrequency(33.f);

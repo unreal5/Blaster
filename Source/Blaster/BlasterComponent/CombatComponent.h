@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+
+#include "Hud/BlasterHUD.h"
+
 #include "CombatComponent.generated.h"
 
 class ABlasterHUD;
@@ -71,10 +74,11 @@ private:
 	/* Hud and crosshair */
 	float CrosshairVelocityFactor = 0.f;
 	float CrosshairInAirFactor = 0.f;
-
+	float CrosshairAimFactor = 0.f;
+	float CrosshairShootingFactor = 0.f;
 	// 准星碰撞的位置
 	FVector HitTarget;
-
+	FHUDPackage HUDPackage;
 	/*
 	 * Aiming and FOV
 	 */

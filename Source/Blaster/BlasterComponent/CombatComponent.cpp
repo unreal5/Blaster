@@ -44,11 +44,8 @@ void UCombatComponent::BeginPlay()
 		if (Character->GetFollowCamera())
 		{
 			CurrentFOV = DefaultFOV = Character->GetFollowCamera()->FieldOfView;
-			
 		}
 	}
-
-	
 }
 
 void UCombatComponent::SetHudCrosshair(float DeltaTime)
@@ -65,7 +62,7 @@ void UCombatComponent::SetHudCrosshair(float DeltaTime)
 	}
 	if (BlasterHUD.IsValid())
 	{
-		FHUDPackage HUDPackage;
+		
 		if (EquippedWeapon)
 		{
 			HUDPackage.CrosshairCenter = EquippedWeapon->CrosshairCenter;
@@ -99,7 +96,19 @@ void UCombatComponent::SetHudCrosshair(float DeltaTime)
 		{
 			CrosshairInAirFactor = FMath::FInterpTo(CrosshairInAirFactor, 0.f, DeltaTime, 30.f);
 		}
-		HUDPackage.CrosshairSpread = CrosshairVelocityFactor + CrosshairInAirFactor;
+		
+		if (bAiming)
+		{
+			CrosshairAimFactor = FMath::FInterpTo(CrosshairAimFactor, 0.58f, DeltaTime, 30.f);
+		}
+		else
+		{
+			CrosshairAimFactor = FMath::FInterpTo(CrosshairAimFactor, 0.f, DeltaTime, 30.f);
+		}
+		
+		CrosshairShootingFactor = FMath::FInterpTo(CrosshairShootingFactor, 0.f, DeltaTime, 40.f);
+		
+		HUDPackage.CrosshairSpread = 0.5f + CrosshairVelocityFactor + CrosshairInAirFactor - CrosshairAimFactor + CrosshairShootingFactor;
 		BlasterHUD->SetHudPackage(HUDPackage);
 	}
 }
@@ -109,7 +118,6 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	
 
 	// 只有本机控制的角色才能进行射击
 	if (Character.IsValid() && Character->IsLocallyControlled())
@@ -126,8 +134,6 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	{
 		HitTarget = FVector::ZeroVector;
 	}
-
-	
 }
 
 void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
@@ -230,6 +236,15 @@ void UCombatComponent::TraceUnderCrosshair(FHitResult& TraceHitResult)
 		{
 			TraceHitResult.ImpactPoint = TraceEnd;
 		}
+		if (TraceHitResult.GetActor() && TraceHitResult.GetActor()->Implements<UInteractWithCrosshair>())
+		{
+			// tell hud draw crosshair to red color.
+			HUDPackage.CrosshairColor = FLinearColor::Red;
+		}
+		else
+		{
+			HUDPackage.CrosshairColor = FLinearColor::White;
+		}
 	}
 }
 
@@ -239,7 +254,8 @@ void UCombatComponent::InterpFOV(float DeltaTime)
 
 	if (bAiming)
 	{
-		CurrentFOV = FMath::FInterpTo(CurrentFOV, EquippedWeapon->GetZoomedFOV(), DeltaTime, EquippedWeapon->GetZoomInterpSpeed());
+		CurrentFOV = FMath::FInterpTo(CurrentFOV, EquippedWeapon->GetZoomedFOV(), DeltaTime,
+		                              EquippedWeapon->GetZoomInterpSpeed());
 	}
 	else
 	{
@@ -260,6 +276,11 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 		FHitResult HitResult;
 		TraceUnderCrosshair(HitResult);
 		Server_Fire(HitResult.ImpactPoint);
+
+		if (EquippedWeapon)
+		{
+			CrosshairShootingFactor += 0.75f;
+		}
 	}
 }
 
