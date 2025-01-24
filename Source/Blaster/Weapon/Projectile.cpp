@@ -1,8 +1,8 @@
 
-
+#include "Weapon/Projectile.h"
 #include "Character/BlasterCharacter.h"
 #include "Blaster.h"
-#include "Weapon/Projectile.h"
+
 
 #include "Components/BoxComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
