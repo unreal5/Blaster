@@ -92,6 +92,15 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category=Combat, meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UAnimMontage> FireWeaponMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category=Combat, meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UAnimMontage> HitReactMontage;
+
+
+	
+	void HideCameraIfCharacterClose();
+	UPROPERTY(EditDefaultsOnly, Category=Combat, meta=(AllowPrivateAccess="true"))
+	float CameraThreshold = 200.f;
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
 	bool IsWeaponEquipped() const;
@@ -101,10 +110,14 @@ public:
 	AWeapon* GetEquippedWeapon() const;
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
 	void PlayFireMontage(bool bAiming);
-
+	void PlayHitReactMontage();
+	
 	FVector GetHitTarget() const;
 
 	FORCEINLINE UCameraComponent *GetFollowCamera() const { return FollowCamera; }
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_Hit();
 };
 
 

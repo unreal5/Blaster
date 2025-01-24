@@ -224,6 +224,10 @@ void UCombatComponent::TraceUnderCrosshair(FHitResult& TraceHitResult)
 	if (bScreenToWorld)
 	{
 		FVector TraceStart = CrosshairWorldPosition;
+		// 起始点前移，防止碰撞到后面的目标
+		const float DistanceToCharacter = (Character->GetActorLocation()-TraceStart).Size();
+		TraceStart += CrosshairWorldDirection * DistanceToCharacter;
+		
 		FVector TraceEnd = CrosshairWorldPosition + CrosshairWorldDirection * TRACE_LENGTH;
 		FCollisionQueryParams QueryParams;
 		QueryParams.AddIgnoredActor(Character.Get());

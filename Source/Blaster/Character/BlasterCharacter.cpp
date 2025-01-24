@@ -1,5 +1,7 @@
-#include "Character/BlasterCharacter.h"
 
+
+#include "Character/BlasterCharacter.h"
+#include "Blaster.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 
@@ -49,9 +51,13 @@ ABlasterCharacter::ABlasterCharacter()
 	GetCharacterMovement()->MaxWalkSpeedCrouched = 100.f;
 	GetCharacterMovement()->SetCrouchedHalfHeight(60.f);
 
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_SkeletalMesh, ECR_Ignore);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	
+	GetMesh()->SetCollisionObjectType(ECC_SkeletalMesh);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	
 	// 设置网络更新频率
 	SetNetUpdateFrequency(66.f);
 	SetMinNetUpdateFrequency(33.f);
@@ -163,6 +169,33 @@ void ABlasterCharacter::Server_EquipButtonPressed_Implementation()
 }
 
 
+void ABlasterCharacter::Multicast_Hit_Implementation()
+{
+	PlayHitReactMontage();
+}
+
+void ABlasterCharacter::HideCameraIfCharacterClose()
+{
+	if (!IsLocallyControlled()) return;
+
+	if ( (FollowCamera->GetComponentLocation()-GetActorLocation()).Size() < CameraThreshold)
+	{
+		GetMesh()->SetVisibility(false);
+		if (CombatComponent->GetEquippedWeapon())
+		{
+			CombatComponent->GetEquippedWeapon()->GetWeaponMesh()->bOwnerNoSee = true;
+		}
+	}
+	else
+	{
+		GetMesh()->SetVisibility(true);
+		if (CombatComponent->GetEquippedWeapon())
+		{
+			CombatComponent->GetEquippedWeapon()->GetWeaponMesh()->bOwnerNoSee = false;
+		}
+	}
+}
+
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 {
 	if (OverlappingWeapon != Weapon)
@@ -185,6 +218,8 @@ void ABlasterCharacter::Tick(float DeltaTime)
 
 	// 每帧更新瞄准偏移
 	AimOffset(DeltaTime);
+
+	HideCameraIfCharacterClose();
 }
 
 void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -262,6 +297,7 @@ AWeapon* ABlasterCharacter::GetEquippedWeapon() const
 void ABlasterCharacter::PlayFireMontage(bool bAiming)
 {
 	if (CombatComponent->GetEquippedWeapon() == nullptr) return;
+	
 
 	// UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	// if (AnimInstance == nullptr || FireWeaponMontage == nullptr) return;
@@ -270,6 +306,15 @@ void ABlasterCharacter::PlayFireMontage(bool bAiming)
 	FName SectionName = bAiming ? TEXT("RifleAim") : TEXT("RifleHip");
 	// AnimInstance->Montage_JumpToSection(SectionName, FireWeaponMontage);
 	PlayAnimMontage(FireWeaponMontage, 1.f, SectionName);
+}
+
+void ABlasterCharacter::PlayHitReactMontage()
+{
+	check(HitReactMontage);
+	// 蒙太奇建立在持枪的基础上！！！
+	if (CombatComponent->GetEquippedWeapon() == nullptr) return;
+	FName SectionName = TEXT("FromFront");
+	PlayAnimMontage(HitReactMontage, 1.f, SectionName);
 }
 
 FVector ABlasterCharacter::GetHitTarget() const

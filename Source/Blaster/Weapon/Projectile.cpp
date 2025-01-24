@@ -1,3 +1,7 @@
+
+
+#include "Character/BlasterCharacter.h"
+#include "Blaster.h"
 #include "Weapon/Projectile.h"
 
 #include "Components/BoxComponent.h"
@@ -19,7 +23,9 @@ AProjectile::AProjectile()
 	CollisionBox->SetCollisionResponseToAllChannels(ECR_Ignore);
 	CollisionBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-
+	CollisionBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	CollisionBox->SetCollisionResponseToChannel(ECC_SkeletalMesh, ECR_Block);
+	
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
 	ProjectileMovement->SetUpdatedComponent(GetRootComponent());
 	ProjectileMovement->InitialSpeed = 15000.f;
@@ -62,5 +68,11 @@ void AProjectile::Destroyed()
 void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                         FVector NormalImpulse, const FHitResult& Hit)
 {
+	// 只有Server才注册OhHit事件，因此此函数只会在Server上调用
+	auto BlasterCharacter = Cast<ABlasterCharacter>(OtherActor);
+	if (BlasterCharacter)
+	{
+		BlasterCharacter->Multicast_Hit();
+	}
 	Destroy();
 }
