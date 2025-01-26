@@ -94,6 +94,22 @@ private:
 	float ZoomInterpSpeed = 20.0f;
 
 	void InterpFOV(float DeltaTime);
+	/*
+	 * 自动开火
+	 */
+	FTimerHandle FireTimer;
+	// 以下变量重构到Weapon类
+	// UPROPERTY(EditDefaultsOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	// float FireDelay =0.15f;
+	//
+	// UPROPERTY(EditDefaultsOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	// bool bAutmatic = true;
+	bool bCanFire = true;
+	
+	void StartFireTimer();
+	void FireTimerFinished();
+	void Fire();
+
 public:
 	AWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
 	bool IsAiming() const { return bAiming; }

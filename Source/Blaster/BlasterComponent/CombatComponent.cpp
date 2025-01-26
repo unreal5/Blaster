@@ -62,7 +62,6 @@ void UCombatComponent::SetHudCrosshair(float DeltaTime)
 	}
 	if (BlasterHUD.IsValid())
 	{
-		
 		if (EquippedWeapon)
 		{
 			HUDPackage.CrosshairCenter = EquippedWeapon->CrosshairCenter;
@@ -96,7 +95,7 @@ void UCombatComponent::SetHudCrosshair(float DeltaTime)
 		{
 			CrosshairInAirFactor = FMath::FInterpTo(CrosshairInAirFactor, 0.f, DeltaTime, 30.f);
 		}
-		
+
 		if (bAiming)
 		{
 			CrosshairAimFactor = FMath::FInterpTo(CrosshairAimFactor, 0.58f, DeltaTime, 30.f);
@@ -105,10 +104,11 @@ void UCombatComponent::SetHudCrosshair(float DeltaTime)
 		{
 			CrosshairAimFactor = FMath::FInterpTo(CrosshairAimFactor, 0.f, DeltaTime, 30.f);
 		}
-		
+
 		CrosshairShootingFactor = FMath::FInterpTo(CrosshairShootingFactor, 0.f, DeltaTime, 40.f);
-		
-		HUDPackage.CrosshairSpread = 0.5f + CrosshairVelocityFactor + CrosshairInAirFactor - CrosshairAimFactor + CrosshairShootingFactor;
+
+		HUDPackage.CrosshairSpread = 0.5f + CrosshairVelocityFactor + CrosshairInAirFactor - CrosshairAimFactor +
+			CrosshairShootingFactor;
 		BlasterHUD->SetHudPackage(HUDPackage);
 	}
 }
@@ -225,9 +225,9 @@ void UCombatComponent::TraceUnderCrosshair(FHitResult& TraceHitResult)
 	{
 		FVector TraceStart = CrosshairWorldPosition;
 		// 起始点前移，防止碰撞到后面的目标
-		const float DistanceToCharacter = (Character->GetActorLocation()-TraceStart).Size();
+		const float DistanceToCharacter = (Character->GetActorLocation() - TraceStart).Size();
 		TraceStart += CrosshairWorldDirection * DistanceToCharacter;
-		
+
 		FVector TraceEnd = CrosshairWorldPosition + CrosshairWorldDirection * TRACE_LENGTH;
 		FCollisionQueryParams QueryParams;
 		QueryParams.AddIgnoredActor(Character.Get());
@@ -271,20 +271,51 @@ void UCombatComponent::InterpFOV(float DeltaTime)
 	}
 }
 
+void UCombatComponent::StartFireTimer()
+{
+	if (EquippedWeapon == nullptr || !Character.IsValid()) return;
+
+	Character->GetWorldTimerManager().SetTimer(FireTimer, this, &UCombatComponent::FireTimerFinished,
+	                                           EquippedWeapon->FireDelay);
+}
+
+void UCombatComponent::FireTimerFinished()
+{
+	bCanFire = true;
+
+	if (EquippedWeapon == nullptr) return;
+
+	if (bFireButtonPressed && EquippedWeapon->bAutmatic)
+	{
+		Fire();
+	}
+}
+
+
+void UCombatComponent::Fire()
+{
+	if (!bCanFire) return;
+
+	bCanFire = false;
+	Server_Fire(HitTarget);
+
+	if (EquippedWeapon)
+	{
+		CrosshairShootingFactor += 0.75f;
+
+		if (EquippedWeapon->bAutmatic)
+		{
+			StartFireTimer();
+		}
+	}
+}
 
 void UCombatComponent::FireButtonPressed(bool bPressed)
 {
 	bFireButtonPressed = bPressed;
 	if (bFireButtonPressed)
 	{
-		FHitResult HitResult;
-		TraceUnderCrosshair(HitResult);
-		Server_Fire(HitResult.ImpactPoint);
-
-		if (EquippedWeapon)
-		{
-			CrosshairShootingFactor += 0.75f;
-		}
+		Fire();
 	}
 }
 

@@ -27,9 +27,11 @@ public:
 	virtual void BeginPlay() override;
 	virtual void NotifyControllerChanged() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void OnRep_ReplicateMovement() override;
 	virtual void Jump() override;
 protected:
 	void AimOffset(float DeltaTime);
+	void SimProxiesTurn();
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	USpringArmComponent* CameraBoom;
@@ -89,6 +91,8 @@ private:
 	// turning in place
 	ETurningInPlace TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 	void TurnInPlace(float DeltaTime);
+	void CalculateAO_Pitch();
+	float CalculateSpeed();
 
 	UPROPERTY(EditDefaultsOnly, Category=Combat, meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UAnimMontage> FireWeaponMontage;
@@ -101,6 +105,13 @@ private:
 	void HideCameraIfCharacterClose();
 	UPROPERTY(EditDefaultsOnly, Category=Combat, meta=(AllowPrivateAccess="true"))
 	float CameraThreshold = 200.f;
+
+	bool bRotateRootBone = false;
+	float TurnThreshold = 0.5f;
+	FRotator ProxyRotationLastFrame;
+	FRotator ProxyRotation;
+	float ProxyYaw = 0.f;
+	float TimeSinceLastMovementReplication = 0.f;
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
 	bool IsWeaponEquipped() const;
@@ -115,9 +126,11 @@ public:
 	FVector GetHitTarget() const;
 
 	FORCEINLINE UCameraComponent *GetFollowCamera() const { return FollowCamera; }
-
+	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
+	
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_Hit();
+	
 };
 
 

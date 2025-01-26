@@ -46,7 +46,15 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Properties")
 	float ZoomInterpSpeed = 20.0f;
-	
+
+	/**
+	 * Automatic fire
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
+	float FireDelay =0.15f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
+	bool bAutmatic = true;
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon Properties")
 	class USkeletalMeshComponent* WeaponMesh;

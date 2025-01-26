@@ -1,5 +1,3 @@
-
-
 #include "Character/BlasterCharacter.h"
 #include "Blaster.h"
 #include "EnhancedInputComponent.h"
@@ -53,11 +51,11 @@ ABlasterCharacter::ABlasterCharacter()
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_SkeletalMesh, ECR_Ignore);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-	
+
 	GetMesh()->SetCollisionObjectType(ECC_SkeletalMesh);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-	
+
 	// 设置网络更新频率
 	SetNetUpdateFrequency(66.f);
 	SetMinNetUpdateFrequency(33.f);
@@ -111,6 +109,14 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(ThisClass, OverlappingWeapon, COND_OwnerOnly);
+}
+
+void ABlasterCharacter::OnRep_ReplicateMovement()
+{
+	Super::OnRep_ReplicateMovement();
+
+	SimProxiesTurn();
+	TimeSinceLastMovementReplication = 0.f;
 }
 
 void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* OldWeapon)
@@ -178,7 +184,7 @@ void ABlasterCharacter::HideCameraIfCharacterClose()
 {
 	if (!IsLocallyControlled()) return;
 
-	if ( (FollowCamera->GetComponentLocation()-GetActorLocation()).Size() < CameraThreshold)
+	if ((FollowCamera->GetComponentLocation() - GetActorLocation()).Size() < CameraThreshold)
 	{
 		GetMesh()->SetVisibility(false);
 		if (CombatComponent->GetEquippedWeapon())
@@ -217,7 +223,25 @@ void ABlasterCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	// 每帧更新瞄准偏移
-	AimOffset(DeltaTime);
+	if (GetLocalRole() > ENetRole::ROLE_SimulatedProxy && IsLocallyControlled())
+	{
+		AimOffset(DeltaTime);
+	}
+	else
+	{
+		TimeSinceLastMovementReplication += DeltaTime;
+		if (TimeSinceLastMovementReplication > 0.25f)
+		{
+			OnRep_ReplicateMovement();
+		}
+
+		CalculateAO_Pitch();
+	}
+	// 用RepNOtify来处理
+	// else
+	// {
+	// 	SimProxiesTurn();
+	// }
 
 	HideCameraIfCharacterClose();
 }
@@ -297,7 +321,7 @@ AWeapon* ABlasterCharacter::GetEquippedWeapon() const
 void ABlasterCharacter::PlayFireMontage(bool bAiming)
 {
 	if (CombatComponent->GetEquippedWeapon() == nullptr) return;
-	
+
 
 	// UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	// if (AnimInstance == nullptr || FireWeaponMontage == nullptr) return;
@@ -349,17 +373,36 @@ void ABlasterCharacter::TurnInPlace(float DeltaTime)
 	}
 }
 
+void ABlasterCharacter::CalculateAO_Pitch()
+{
+	AO_Pitch = GetBaseAimRotation().Pitch;
+	if (AO_Pitch > 90.f)
+	{
+		// fix the pitch value when looking up
+		FVector2D InRange{270.f, 360.f};
+		FVector2D OutRange{-90.f, 0.f};
+		AO_Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRange, AO_Pitch);
+	}
+}
+
+float ABlasterCharacter::CalculateSpeed()
+{
+	auto Velocity = GetVelocity();
+	Velocity.Z = 0;
+	auto Speed = Velocity.Size();
+	return Speed;
+}
+
 void ABlasterCharacter::AimOffset(float DeltaTime)
 {
 	if (!CombatComponent->GetEquippedWeapon())
 		return;
 
-	auto Velocity = GetVelocity();
-	Velocity.Z = 0;
-	auto Speed = Velocity.Size();
+	float Speed = CalculateSpeed();
 	bool bIsInAir = GetCharacterMovement()->IsFalling();
 	if (FMath::IsNearlyZero(Speed) && !bIsInAir) // standing still, not jumping
 	{
+		bRotateRootBone = true;
 		FRotator CurrentAimRotation = FRotator{0.f, GetBaseAimRotation().Yaw, 0.f};
 		FRotator DeltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotator);
 		AO_Yaw = DeltaAimRotation.Yaw;
@@ -371,17 +414,46 @@ void ABlasterCharacter::AimOffset(float DeltaTime)
 	}
 	else // in air or moving
 	{
+		bRotateRootBone = false;
 		StartingAimRotator = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		AO_Yaw = 0.f;
 		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 	}
 
-	AO_Pitch = GetBaseAimRotation().Pitch;
-	if (AO_Pitch > 90.f)
+	CalculateAO_Pitch();
+}
+
+void ABlasterCharacter::SimProxiesTurn()
+{
+	if (CombatComponent->GetEquippedWeapon() == nullptr) return;
+	bRotateRootBone = false;
+	if (CalculateSpeed() > 0.f)
 	{
-		// fix the pitch value when looking up
-		FVector2D InRange{270.f, 360.f};
-		FVector2D OutRange{-90.f, 0.f};
-		AO_Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRange, AO_Pitch);
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+		return;
+	}
+
+
+	ProxyRotationLastFrame = ProxyRotation;
+	ProxyRotation = GetActorRotation();
+	ProxyYaw = UKismetMathLibrary::NormalizedDeltaRotator(ProxyRotation, ProxyRotationLastFrame).Yaw;
+	if (FMath::Abs(ProxyYaw) > TurnThreshold) // 教程逻辑有问题
+	{
+		if (ProxyYaw > TurnThreshold)
+		{
+			TurningInPlace = ETurningInPlace::ETIP_Right;
+		}
+		else //if (ProxyYaw < -TurnThreshold)
+		{
+			TurningInPlace = ETurningInPlace::ETIP_Left;
+		}
+		// else
+		// {
+		// 	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+		// }
+	}
+	else
+	{
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 	}
 }
