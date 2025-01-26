@@ -15,6 +15,7 @@
 #include "Kismet/KismetMathLibrary.h"
 
 #include "Net/UnrealNetwork.h"
+#include "PlayerController/BlasterPlayerController.h"
 
 #include "Weapon/Weapon.h"
 
@@ -75,6 +76,12 @@ void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	OverheadWidgetComponent->SetVisibility(true);
+
+	BlasterPlayerController = GetController<ABlasterPlayerController>();
+	if (BlasterPlayerController)
+	{
+		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
 }
 
 void ABlasterCharacter::NotifyControllerChanged()
@@ -109,6 +116,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(ThisClass, OverlappingWeapon, COND_OwnerOnly);
+	DOREPLIFETIME(ThisClass, Health);
 }
 
 void ABlasterCharacter::OnRep_ReplicateMovement()
@@ -199,6 +207,15 @@ void ABlasterCharacter::HideCameraIfCharacterClose()
 		{
 			CombatComponent->GetEquippedWeapon()->GetWeaponMesh()->bOwnerNoSee = false;
 		}
+	}
+}
+
+void ABlasterCharacter::OnRep_Health()
+{
+	auto PC = GetController<ABlasterPlayerController>();
+	if (PC && PC->IsLocalController())
+	{
+		PC->SetHUDHealth(Health, MaxHealth);
 	}
 }
 

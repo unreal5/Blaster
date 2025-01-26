@@ -9,6 +9,7 @@
 
 #include "BlasterCharacter.generated.h"
 
+class ABlasterPlayerController;
 class AWeapon;
 class UCameraComponent;
 class USpringArmComponent;
@@ -112,6 +113,20 @@ private:
 	FRotator ProxyRotation;
 	float ProxyYaw = 0.f;
 	float TimeSinceLastMovementReplication = 0.f;
+
+	/*
+	 * Player Health
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Player Stats", meta = (AllowPrivateAccess = "true"))
+	float MaxHealth =100.f;
+
+	UPROPERTY(ReplicatedUsing=OnRep_Health, VisibleAnywhere, Category = "Player Stats", meta = (AllowPrivateAccess = "true"))
+	float Health = 100.f;
+
+	UFUNCTION()
+	void OnRep_Health();
+
+	ABlasterPlayerController* BlasterPlayerController;
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
 	bool IsWeaponEquipped() const;
