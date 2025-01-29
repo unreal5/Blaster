@@ -30,9 +30,16 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void OnRep_ReplicateMovement() override;
 	virtual void Jump() override;
+
+	void Elim();
 protected:
 	void AimOffset(float DeltaTime);
 	void SimProxiesTurn();
+
+	UFUNCTION()
+	void ReceiveDamage(AActor* DamagedActor,  float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser);
+	
+	void UpdateHudHealth();
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	USpringArmComponent* CameraBoom;
@@ -104,6 +111,7 @@ private:
 
 	
 	void HideCameraIfCharacterClose();
+	
 	UPROPERTY(EditDefaultsOnly, Category=Combat, meta=(AllowPrivateAccess="true"))
 	float CameraThreshold = 200.f;
 
@@ -142,9 +150,12 @@ public:
 
 	FORCEINLINE UCameraComponent *GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
-	
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_Hit();
+
+	// 只有Server才注册OhHit事件，因此此函数只会在Server上调用
+	// 子类已经进行了伤害处理，生命值变化时，会引起客户端的OnRep_Health调用。
+	// 复制效率比RPC高，因此我们不再使用以下代码
+	//UFUNCTION(NetMulticast, Reliable)
+	//void Multicast_Hit();
 	
 };
 

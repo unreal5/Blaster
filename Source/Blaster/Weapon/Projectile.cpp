@@ -69,10 +69,14 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
                         FVector NormalImpulse, const FHitResult& Hit)
 {
 	// 只有Server才注册OhHit事件，因此此函数只会在Server上调用
+	// 子类已经进行了伤害处理，生命值变化时，会引起客户端的OnRep_Health调用。
+	// 复制效率比RPC高，因此我们不再使用以下代码
+	/*
 	auto BlasterCharacter = Cast<ABlasterCharacter>(OtherActor);
 	if (BlasterCharacter)
 	{
 		BlasterCharacter->Multicast_Hit();
 	}
+	*/
 	Destroy();
 }

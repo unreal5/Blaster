@@ -11,6 +11,7 @@
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameMode/BlasterGameMode.h"
 
 #include "Kismet/KismetMathLibrary.h"
 
@@ -77,10 +78,17 @@ void ABlasterCharacter::BeginPlay()
 	Super::BeginPlay();
 	OverheadWidgetComponent->SetVisibility(true);
 
-	BlasterPlayerController = GetController<ABlasterPlayerController>();
-	if (BlasterPlayerController)
+	// BlasterPlayerController = GetController<ABlasterPlayerController>();
+	// if (BlasterPlayerController)
+	// {
+	// 	BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+	// }
+	UpdateHudHealth();
+
+	// 只在服务器上注册接收伤害事件
+	if (HasAuthority())
 	{
-		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+		OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
 	}
 }
 
@@ -89,9 +97,9 @@ void ABlasterCharacter::NotifyControllerChanged()
 	Super::NotifyControllerChanged();
 
 	// Add Input Mapping Context
-	APlayerController* PlayerController = GetController<APlayerController>();
-	if (!PlayerController) return;
-	ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer();
+	BlasterPlayerController = GetController<ABlasterPlayerController>();
+	if (!BlasterPlayerController) return;
+	ULocalPlayer* LocalPlayer = BlasterPlayerController->GetLocalPlayer();
 	if (!LocalPlayer) return;
 	UEnhancedInputLocalPlayerSubsystem* Subsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
 	if (!Subsystem) return;
@@ -109,6 +117,10 @@ void ABlasterCharacter::Jump()
 	{
 		Super::Jump();
 	}
+}
+
+void ABlasterCharacter::Elim()
+{
 }
 
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -182,11 +194,12 @@ void ABlasterCharacter::Server_EquipButtonPressed_Implementation()
 	CombatComponent->EquipWeapon(OverlappingWeapon);
 }
 
-
+/*
 void ABlasterCharacter::Multicast_Hit_Implementation()
 {
 	PlayHitReactMontage();
 }
+*/
 
 void ABlasterCharacter::HideCameraIfCharacterClose()
 {
@@ -210,13 +223,19 @@ void ABlasterCharacter::HideCameraIfCharacterClose()
 	}
 }
 
+void ABlasterCharacter::UpdateHudHealth()
+{
+	
+	if (BlasterPlayerController && BlasterPlayerController->IsLocalController())
+	{
+		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}
+
 void ABlasterCharacter::OnRep_Health()
 {
-	auto PC = GetController<ABlasterPlayerController>();
-	if (PC && PC->IsLocalController())
-	{
-		PC->SetHUDHealth(Health, MaxHealth);
-	}
+	PlayHitReactMontage();
+	UpdateHudHealth();
 }
 
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
@@ -472,5 +491,24 @@ void ABlasterCharacter::SimProxiesTurn()
 	else
 	{
 		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+	}
+}
+
+void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
+{
+	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+	// 服务端不会调用OnRep_Health，因此没有命中效果，我们需要手动调用
+	UpdateHudHealth();
+	PlayHitReactMontage();
+	if (Health <= 0.f)
+	{
+		// 通知GameMode
+		auto BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
+		check(BlasterGameMode);
+		if (BlasterGameMode)
+		{
+			check(BlasterPlayerController);
+			BlasterGameMode->PlayerEliminated(this, BlasterPlayerController, Cast<ABlasterPlayerController>(InstigatedBy));
+		}
 	}
 }
