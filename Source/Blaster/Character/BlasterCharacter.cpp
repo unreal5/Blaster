@@ -61,6 +61,12 @@ ABlasterCharacter::ABlasterCharacter()
 	// 设置网络更新频率
 	SetNetUpdateFrequency(66.f);
 	SetMinNetUpdateFrequency(33.f);
+
+	// 生成策略
+	SpawnCollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+	// timeline componet
+	DissolveTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("溶解时间线组件"));
 }
 
 void ABlasterCharacter::PostInitializeComponents()
@@ -119,8 +125,46 @@ void ABlasterCharacter::Jump()
 	}
 }
 
+void ABlasterCharacter::ElimTimerFinished()
+{
+	GetWorld()->GetAuthGameMode<ABlasterGameMode>()->RequestRespawn(this, GetController());
+}
+
+// only called on server
 void ABlasterCharacter::Elim()
 {
+	if (CombatComponent->GetEquippedWeapon())
+    {
+        CombatComponent->GetEquippedWeapon()->Dropped();
+    }
+	MulticastElim();
+	GetWorldTimerManager().SetTimer(ElimTimerHandle, this, &ThisClass::ElimTimerFinished, ElimDelay, false);
+}
+
+void ABlasterCharacter::MulticastElim_Implementation()
+{
+	bElimmed = true;
+	PlayElimMontage();
+
+	// dissolve effect
+	if (DissolveMaterialInstance)
+	{
+		DynamicDissolveMaterialInstance = UMaterialInstanceDynamic::Create(DissolveMaterialInstance, this);
+		GetMesh()->SetMaterial(0, DynamicDissolveMaterialInstance);
+		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Dissolve"), 0.55f);
+		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Glow"), 200.f);
+	}
+	StartDissolve();
+	// disable character movement
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
+	if (BlasterPlayerController)
+	{
+		DisableInput(BlasterPlayerController);
+	}
+	// disable collision
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -225,7 +269,6 @@ void ABlasterCharacter::HideCameraIfCharacterClose()
 
 void ABlasterCharacter::UpdateHudHealth()
 {
-	
 	if (BlasterPlayerController && BlasterPlayerController->IsLocalController())
 	{
 		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
@@ -236,6 +279,26 @@ void ABlasterCharacter::OnRep_Health()
 {
 	PlayHitReactMontage();
 	UpdateHudHealth();
+}
+
+
+void ABlasterCharacter::UpdateDissolveMaterial(float Value)
+{
+	if (DynamicDissolveMaterialInstance)
+	{
+		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Dissolve"), Value);
+		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Glow"), 200.f - 200.f * Value);
+	}
+}
+
+void ABlasterCharacter::StartDissolve()
+{
+	DissolveTrack.BindDynamic(this, &ThisClass::UpdateDissolveMaterial);
+	if (DissolveCurve)
+	{
+		DissolveTimeline->AddInterpFloat(DissolveCurve, DissolveTrack);
+		DissolveTimeline->PlayFromStart();
+	}
 }
 
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
@@ -375,6 +438,12 @@ void ABlasterCharacter::PlayHitReactMontage()
 	if (CombatComponent->GetEquippedWeapon() == nullptr) return;
 	FName SectionName = TEXT("FromFront");
 	PlayAnimMontage(HitReactMontage, 1.f, SectionName);
+}
+
+void ABlasterCharacter::PlayElimMontage()
+{
+	check(ElimMontage);
+	PlayAnimMontage(ElimMontage);
 }
 
 FVector ABlasterCharacter::GetHitTarget() const

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "InputMappingContext.h"
 #include "BlasterTypes/TurningInPlace.h"
+#include "Components/TimelineComponent.h"
 #include "GameFramework/Character.h"
 
 #include "Interface/InteractWithCrosshair.h"
@@ -31,7 +32,11 @@ public:
 	virtual void OnRep_ReplicateMovement() override;
 	virtual void Jump() override;
 
+	// only on server
 	void Elim();
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastElim();
 protected:
 	void AimOffset(float DeltaTime);
 	void SimProxiesTurn();
@@ -108,7 +113,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category=Combat, meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UAnimMontage> HitReactMontage;
 
-
+	UPROPERTY(EditDefaultsOnly, Category=Combat, meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UAnimMontage> ElimMontage;
 	
 	void HideCameraIfCharacterClose();
 	
@@ -135,6 +141,36 @@ private:
 	void OnRep_Health();
 
 	ABlasterPlayerController* BlasterPlayerController;
+
+	bool bElimmed = false;
+
+	FTimerHandle ElimTimerHandle;
+
+	UPROPERTY(EditDefaultsOnly, Category = Elim, meta = (AllowPrivateAccess = "true"))
+	float ElimDelay = 5.f;
+	void ElimTimerFinished();
+
+	/**
+	 * Dissolve effect
+	 */
+	FOnTimelineFloat DissolveTrack;
+	
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UTimelineComponent> DissolveTimeline;
+
+	UPROPERTY(EditDefaultsOnly, Category = Elim, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UCurveFloat> DissolveCurve;
+	UFUNCTION()
+	void UpdateDissolveMaterial(float Value);
+
+	void StartDissolve();
+
+	// 动态材质，运行时可以改变材质参数。由网格的材质实例创建，因此不可以在编辑器中设置
+	UPROPERTY(Transient, VisibleAnywhere, Category = Elim, meta = (AllowPrivateAccess = "true"))
+	UMaterialInstanceDynamic* DynamicDissolveMaterialInstance;
+	// 静态材质，运行时不可以改变材质参数
+	UPROPERTY(EditDefaultsOnly, Category = Elim, meta = (AllowPrivateAccess = "true"))
+	UMaterialInstance* DissolveMaterialInstance;
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
 	bool IsWeaponEquipped() const;
@@ -143,8 +179,10 @@ public:
 	float GetAOPitch() const { return AO_Pitch; }
 	AWeapon* GetEquippedWeapon() const;
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
+
 	void PlayFireMontage(bool bAiming);
 	void PlayHitReactMontage();
+	void PlayElimMontage();
 	
 	FVector GetHitTarget() const;
 
@@ -156,7 +194,7 @@ public:
 	// 复制效率比RPC高，因此我们不再使用以下代码
 	//UFUNCTION(NetMulticast, Reliable)
 	//void Multicast_Hit();
-	
+	FORCEINLINE bool IsElimmed() const { return bElimmed; }	
 };
 
 

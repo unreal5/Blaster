@@ -1,7 +1,3 @@
-
-
-
-
 #include "Weapon/Weapon.h"
 #include "Casing.h"
 #include "Character/BlasterCharacter.h"
@@ -87,9 +83,17 @@ void AWeapon::OnRep_WeaponState(EWeaponState OldState)
 	{
 	case EWeaponState::EWS_Equipped:
 		ShowPickupWidget(false);
-		// 客户端并不会产生碰撞事件
-		// 从这里可以得出一些经验，客户端主要处理视觉效果
-		//AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	// 客户端并不会产生碰撞事件
+	// 从这里可以得出一些经验，客户端主要处理视觉效果
+	//AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		WeaponMesh->SetSimulatePhysics(false);
+		WeaponMesh->SetEnableGravity(false);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		break;
+	case EWeaponState::EWS_Dropped:
+		WeaponMesh->SetSimulatePhysics(true);
+		WeaponMesh->SetEnableGravity(true);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		break;
 	}
 }
@@ -102,6 +106,19 @@ void AWeapon::SetWeaponState(EWeaponState State)
 	case EWeaponState::EWS_Equipped:
 		ShowPickupWidget(false);
 		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		WeaponMesh->SetSimulatePhysics(false);
+		WeaponMesh->SetEnableGravity(false);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		break;
+	case EWeaponState::EWS_Dropped:
+		if (HasAuthority())
+		{
+			ShowPickupWidget(true);
+			AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		}
+		WeaponMesh->SetSimulatePhysics(true);
+		WeaponMesh->SetEnableGravity(true);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		break;
 	}
 }
@@ -128,6 +145,13 @@ void AWeapon::Fire(const FVector& HitTarget)
 			FTransform SocketTransform = AmmoEjectSocket->GetSocketTransform(WeaponMesh);
 			GetWorld()->SpawnActor<ACasing>(CasingClass, SocketTransform);
 		}
-		
 	}
+}
+
+void AWeapon::Dropped()
+{
+	SetWeaponState(EWeaponState::EWS_Dropped);
+	FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, true);
+	WeaponMesh->DetachFromComponent(DetachRules);
+	SetOwner(nullptr);
 }

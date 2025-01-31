@@ -193,6 +193,16 @@ void UCombatComponent::OnRep_EquippedWeapon(AWeapon* OldWeapon)
 {
 	if (EquippedWeapon && Character.IsValid())
 	{
+		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+
+		auto SkeletalMesh = Character->GetMesh();
+		if (!SkeletalMesh) return;
+		auto RightHandSocket = SkeletalMesh->GetSocketByName("RightHandSocket");
+		if (RightHandSocket)
+		{
+			RightHandSocket->AttachActor(EquippedWeapon, SkeletalMesh);
+		}
+		
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
 	}
