@@ -31,7 +31,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void OnRep_ReplicateMovement() override;
 	virtual void Jump() override;
-
+	virtual void Destroyed() override;
 	// only on server
 	void Elim();
 	
@@ -171,6 +171,16 @@ private:
 	// 静态材质，运行时不可以改变材质参数
 	UPROPERTY(EditDefaultsOnly, Category = Elim, meta = (AllowPrivateAccess = "true"))
 	UMaterialInstance* DissolveMaterialInstance;
+
+	/*
+	 * Elim bot
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = Elim, meta = (AllowPrivateAccess = "true"))
+	UParticleSystem* ElimBotEffect;
+	UPROPERTY(VisibleAnywhere, Category = Elim, meta = (AllowPrivateAccess = "true"))
+	UParticleSystemComponent* ElimBotComponent;
+	UPROPERTY(EditDefaultsOnly, Category = Elim, meta = (AllowPrivateAccess = "true"))
+	USoundBase* ElimBotSound;
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
 	bool IsWeaponEquipped() const;
