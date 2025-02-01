@@ -6,9 +6,31 @@
 #include "Character/BlasterCharacter.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
+#include "PlayerController/BlasterPlayerController.h"
+#include "PlayerState/BlasterPlayerState.h"
 
 void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedPlayer, ABlasterPlayerController* VictimController, ABlasterPlayerController* AttackerController)
 {
+	ABlasterPlayerState* AttackerPlayerState = nullptr;
+	if (AttackerController)
+	{
+		AttackerPlayerState = AttackerController->GetPlayerState<ABlasterPlayerState>();
+	}
+	ABlasterPlayerState* VictimPlayerState = nullptr;
+	if (VictimController)
+	{
+		VictimPlayerState = VictimController->GetPlayerState<ABlasterPlayerState>();
+	}
+
+	if (AttackerPlayerState)
+	{
+		AttackerPlayerState->AddToScore(1);
+	}
+	if (VictimPlayerState)
+	{
+		VictimPlayerState->AddToScore(-1);
+	}
+
 	EliminatedPlayer->Elim();
 }
 

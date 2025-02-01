@@ -19,6 +19,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "PlayerController/BlasterPlayerController.h"
+#include "PlayerState/BlasterPlayerState.h"
 
 #include "Weapon/Weapon.h"
 
@@ -97,6 +98,11 @@ void ABlasterCharacter::BeginPlay()
 	if (HasAuthority())
 	{
 		OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
+		if (auto BlasterPlayerState = GetPlayerState<ABlasterPlayerState>())
+		{
+			BlasterPlayerState->AddToScore(0);
+		}
+		
 	}
 }
 
@@ -107,12 +113,15 @@ void ABlasterCharacter::NotifyControllerChanged()
 	// Add Input Mapping Context
 	BlasterPlayerController = GetController<ABlasterPlayerController>();
 	if (!BlasterPlayerController) return;
+	
 	ULocalPlayer* LocalPlayer = BlasterPlayerController->GetLocalPlayer();
 	if (!LocalPlayer) return;
 	UEnhancedInputLocalPlayerSubsystem* Subsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
 	if (!Subsystem) return;
 
 	Subsystem->AddMappingContext(DefaultMappingContext, 0);
+	// 更新HUD
+	UpdateHudHealth();
 }
 
 void ABlasterCharacter::Jump()
@@ -133,6 +142,15 @@ void ABlasterCharacter::Destroyed()
 	if (ElimBotComponent)
 	{
 		ElimBotComponent->DestroyComponent();
+	}
+}
+
+void ABlasterCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+	if (auto BlasterPlayerState = GetPlayerState<ABlasterPlayerState>())
+	{
+		BlasterPlayerState->AddToScore(0);
 	}
 }
 

@@ -19,6 +19,16 @@ void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth)
 	}
 }
 
+void ABlasterPlayerController::SetHUDScore(float Score)
+{
+	if (!IsLocalController()) return;
+	
+	if (BlasterHUD && BlasterHUD->CharacterOverlay)
+	{
+		BlasterHUD->CharacterOverlay->ScoreAmount->SetText(FText::FromString(FString::Printf(TEXT("%d"), FMath::FloorToInt(Score))));
+	}
+}
+
 void ABlasterPlayerController::BeginPlay()
 {
 	Super::BeginPlay();

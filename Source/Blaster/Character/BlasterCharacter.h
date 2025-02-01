@@ -32,6 +32,7 @@ public:
 	virtual void OnRep_ReplicateMovement() override;
 	virtual void Jump() override;
 	virtual void Destroyed() override;
+	virtual void OnRep_PlayerState() override;
 	// only on server
 	void Elim();
 	
