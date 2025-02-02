@@ -94,15 +94,16 @@ void ABlasterCharacter::BeginPlay()
 	// }
 	UpdateHudHealth();
 
-	// 只在服务器上注册接收伤害事件
+
 	if (HasAuthority())
 	{
+		// 只在服务器上注册接收伤害事件
 		OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
 		if (auto BlasterPlayerState = GetPlayerState<ABlasterPlayerState>())
 		{
 			BlasterPlayerState->AddToScore(0);
+			BlasterPlayerState->AddToDefeats(0);
 		}
-		
 	}
 }
 
@@ -113,7 +114,7 @@ void ABlasterCharacter::NotifyControllerChanged()
 	// Add Input Mapping Context
 	BlasterPlayerController = GetController<ABlasterPlayerController>();
 	if (!BlasterPlayerController) return;
-	
+
 	ULocalPlayer* LocalPlayer = BlasterPlayerController->GetLocalPlayer();
 	if (!LocalPlayer) return;
 	UEnhancedInputLocalPlayerSubsystem* Subsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
@@ -151,6 +152,7 @@ void ABlasterCharacter::OnRep_PlayerState()
 	if (auto BlasterPlayerState = GetPlayerState<ABlasterPlayerState>())
 	{
 		BlasterPlayerState->AddToScore(0);
+		BlasterPlayerState->AddToDefeats(0);
 	}
 }
 

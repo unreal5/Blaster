@@ -29,6 +29,16 @@ void ABlasterPlayerController::SetHUDScore(float Score)
 	}
 }
 
+void ABlasterPlayerController::SetHUDDefeats(int32 Defeats)
+{
+	if (!IsLocalController()) return;
+	
+	if (BlasterHUD && BlasterHUD->CharacterOverlay)
+	{
+		BlasterHUD->CharacterOverlay->DefeatsAmount->SetText(FText::FromString(FString::Printf(TEXT("%d"), Defeats)));
+	}
+}
+
 void ABlasterPlayerController::BeginPlay()
 {
 	Super::BeginPlay();

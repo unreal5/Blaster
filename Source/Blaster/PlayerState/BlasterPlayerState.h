@@ -18,7 +18,15 @@ class BLASTER_API ABlasterPlayerState : public APlayerState
 public:
 	virtual void OnRep_Score() override;
 	void AddToScore(float ScoreAmount);
+	void AddToDefeats(int32 DefeatsAmount);
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 protected:
 	TWeakObjectPtr<ABlasterCharacter> Character;
 	TWeakObjectPtr<ABlasterPlayerController> PlayerController;
+
+	UPROPERTY(ReplicatedUsing=OnRep_Defeats, VisibleAnywhere, BlueprintReadOnly, Category = "Player Stats")
+	int32 Defeats = 0;
+	UFUNCTION()
+	virtual void OnRep_Defeats();
+	
 };
